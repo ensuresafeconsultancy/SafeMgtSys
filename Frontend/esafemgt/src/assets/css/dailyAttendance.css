@@ -1,0 +1,33 @@
+#Attendance #plusBtn .plusBtnBox{
+    /* height: 60px;
+    width: 60px; */
+    background-color: rgba(102, 102, 102, 0.452);
+}
+
+#Attendance #plusBtn .plusBtnBox:hover{
+    background-color: rgb(95, 95, 95);
+    color: #fff;
+}
+
+.workAssignBtn{
+    height: 100px; /* Adjust height as needed */
+    width: 100px; /* Adjust width as needed */
+    color: #fff;
+    background-color: rgba(64, 224, 64, 0.815);
+}
+
+.workAssignBtn:hover{
+    background-color: rgb(71, 228, 57);
+    font-weight: bold;
+}
+.lunchAssign{
+    height: 100px; /* Adjust height as needed */
+    width: 100px; /* Adjust width as needed */
+    color: #fff;
+    background-color: rgba(216, 216, 96, 0.651);
+}
+
+.lunchAssign:hover{
+    background-color: rgb(223, 223, 69);
+    font-weight: bold;
+}

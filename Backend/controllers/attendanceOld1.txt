@@ -1,0 +1,311 @@
+require('dotenv').config();
+const express = require('express')
+const router = express.Router();
+const multer  = require('multer')
+
+
+const fs = require('fs')
+const path = require('path')
+
+const EmpAttendance = require('../schema/attendanceSchema')
+
+const { google } = require('googleapis');
+// const apiKeys = require('./googleApiKey.json')
+const folderId = process.env.FOLDER_ID;
+
+const SCOPE = [process.env.SCOPE];
+
+const credentials = {
+    private_key: process.env.PRIVATE_KEY.split(String.raw`\n`).join('\n'),
+  };
+  
+  
+  async function authorize(){
+      const jwtClient = new google.auth.JWT(
+        process.env.CLIENT_EMAIL,
+          null,
+          credentials.private_key,
+          SCOPE
+      );
+      await jwtClient.authorize();
+      return jwtClient;    
+  }
+
+  router.get('/openFile/:fileId', async (req, res) => {
+    try {
+      const fileId = req.params.fileId; // Get file ID from request parameter
+  
+      console.log("fileId = " , fileId)
+      const authClient = await authorize();
+      const drive = google.drive({ version: 'v3', auth: authClient });
+  
+      const response = await drive.files.get({ fileId });
+      const urlExtract = response.request.responseURL.split('/');
+      console.log(urlExtract[urlExtract.length-1])
+  
+      if(urlExtract[urlExtract.length-1]){
+        res.send({downloadUrl : urlExtract[urlExtract.length-1]})
+      } else {
+        res.status(404).send('File not found or unsupported format');
+      }
+  
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Internal server error'); // Handle errors
+    }
+  });
+
+  async function uploadFile(authClient, fileLocation , mimeTypeParams , fileName){
+    console.log("outside fileLocation = " ,fileLocation)
+    console.log("outside mimeTypeParams = " ,mimeTypeParams)
+  
+    return new Promise((resolve,rejected)=>{
+  
+      console.log("fileLocation = " ,fileLocation)
+      console.log("mimeTypeParams = " ,mimeTypeParams)
+        const drive = google.drive({version:'v3',auth:authClient}); 
+        var fileMetaData = {
+            name: fileName,    
+            parents:[folderId] // A folder ID to which file will get uploaded
+        }
+        drive.files.create({
+            resource:fileMetaData,
+            media:{
+                body: fs.createReadStream(fileLocation), // files that will get uploaded
+                mimeType: mimeTypeParams
+            },
+            fields:'id'
+        },function(error,file){
+            if(error){
+                return rejected(error)
+            }
+            resolve(file);
+        })
+    });
+  }
+  
+
+
+
+function validateFileSize(file) {
+    const fileSizeLimit = 30 * 1024 * 1024; // 30MB in bytes
+    return file.size <= fileSizeLimit;
+  }
+  
+  // Configure Multer storage with file size validation
+  const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'files'); // Adjust 'files' as needed for your file storage location
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now();
+      cb(null, uniqueSuffix + file.originalname);
+    },
+    limits: { fileSize: validateFileSize },
+  });
+
+const upload = multer({ storage: storage })
+
+router.get("/checkInList",async(req, res)=>{
+    try{
+
+        const empCheckInList = await EmpAttendance.findOne({empId:'2345'});
+        res.send({status : 1 , empCheckInList : empCheckInList})
+
+    }catch(err){
+        res.send("some problem")
+    }
+})
+
+router.post("/empCheckOut/:empId/:index" , async(req , res)=>{
+
+  try{
+    console.log("empCheckOut");
+
+    const currentDateAndTime = new Date();
+    const empId = req.params.empId;
+    const recordIndex = parseInt(req.params.index); // Convert index to a number
+
+    // Find the employee record with matching empId and record index
+    const employee = await EmpAttendance.findOne({ empId : empId, currentCheckIn: true });
+
+    if (!employee) {
+      console.error("Employee or record not found");
+      return res.status(404).send({status : 0,  message: "Employee or record not found" });
+    }
+
+    // Get the specific record object using index
+    const record = employee.records[recordIndex];
+
+    if (!record) {
+      console.error("Record index out of bounds");
+      return res.status(400).send({status : 0,  message: "Record index out of bounds" });
+    }
+
+    // Update endTime and calculate totalTime (in minutes)
+    record.endTime = currentDateAndTime.toLocaleTimeString();
+    let endTimeUTC = currentDateAndTime;
+    console.log("endTimeUTC = , ", endTimeUTC)
+    console.log("record.createdAt.getTime() = , ", record.createdAt.getTime())
+    console.log("endTimeUTC.getTime() = , ", endTimeUTC.getTime())
+
+    const timeDiffMs = endTimeUTC.getTime() - record.createdAt.getTime();
+    record.totalTime = Math.floor(timeDiffMs / (1000 * 60)); // Total time in minutes
+    // record.totalTime = Math.floor((timeDiffMs % (1000 * 60)) / 1000);
+
+    record.status = "Check out";
+    employee.currentCheckIn = false;
+
+    employee.totalTimeWorked += record.totalTime;
+    
+
+    
+    
+
+    console.log("timeDiffMs = " , timeDiffMs)
+
+    // Update the employee record with the modified record
+    const updatedEmployee = await employee.save();
+
+    console.log("Check-out successful for employee:", empId);
+    res.send({status : 1, message: "Check-out successful" , updatedEmployee : updatedEmployee});
+        
+
+
+    }catch(err){
+      res.send({status : 0, message : "error"})
+    }
+})
+
+
+router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) => {
+  try {
+    const { location } = req.body;
+    const notes = req.body.notes;
+
+    // Get current date and time (consider using moment.js for better formatting)
+    const dateAndTime = new Date();
+    console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
+    const currentDate = dateAndTime.toLocaleDateString();
+    const startTime = dateAndTime.toLocaleTimeString();
+    // const startTime = dateAndTime;
+
+    console.log("Current Date:", currentDate);
+    console.log("Current Time:", startTime);
+
+    const photoFiles = req.files; // Assume uploaded files are in req.files
+
+    const photoFileIds = [];
+    const photoFileNames = [];
+    const authClient = await authorize(); // Assuming authorization logic
+
+    for (const photo of photoFiles) {
+      const fileLocation = photo.path;
+      const mimeTypeParams = photo.mimetype;
+      const fileId = await uploadFile(authClient, fileLocation, mimeTypeParams, photo.originalname);
+      photoFileIds.push(fileId.data.id);
+      photoFileNames.push(photo.originalname); // Optional: Store original filename
+    }
+
+    console.log("photoFileIds:", photoFileIds);
+    console.log("photoFileNames:", photoFileNames);
+
+    if (req.body.empId === '2345') {
+      // Find the user with empId 2345 (replace with your finding logic)
+      const user = await EmpAttendance.findOne({ empId: '2345' });
+
+      if (!user) {
+        // User not found, create a new user with the first record
+        const userData = {
+          empId: '2345',
+          name: "Balaji",
+          date: currentDate,
+          currentCheckIn: true,
+          records: [
+            {
+              location,
+              startTime,
+              endTime: '',
+              totalTime: '',
+              images: photoFileNames,
+              imagesIds: photoFileIds,
+              notes,
+              status: "Check In"
+            }
+          ]
+        };
+        const newUser = new EmpAttendance(userData);
+        const response = await newUser.save();
+        console.log(response);
+        res.send({  status : 1 , message: "success" });
+        return; // Exit if user is created
+      }
+
+      // User found, append the new record
+      user.currentCheckIn = true;
+      user.records.push({
+        location,
+        startTime,
+        endTime: '',
+        totalTime: '',
+        images: photoFileNames,
+        imagesIds: photoFileIds,
+        notes,
+        status: "Check In"
+      });
+
+      const updatedEmployee = await user.save();
+      console.log(user); // Updated user with appended record
+      res.send({ status : 1 , message: "Record appended successfully" , updatedEmployee : updatedEmployee });
+    } else {
+      // Handle case where empId is not 2345 (optional)
+      console.log("Invalid empId");
+      res.status(400).send("Invalid employee ID"); // Or handle differently
+    }
+
+    deleteAllFiles('files'); // Assuming deletion of uploaded files
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
+});
+
+
+async function deleteAllFiles(folderPath) {
+    try {
+      const files = await fs.promises.readdir(folderPath);
+      for (const file of files) {
+        const filePath = path.join(folderPath, file);
+        await fs.promises.unlink(filePath);
+      }
+      console.log('All files deleted from', folderPath);
+    } catch (err) {
+      console.error('Error deleting files:', err);
+    }
+  }
+
+module.exports = router;
+
+  // const data = {
+    //     name : "balaji",
+    //     date : "2024-07-18",
+    //     records : [{
+    //         location : "Neyveli",
+    //         startTime : "01:45:47 pm",
+    //         endTime : "01:50:47 pm",
+    //         totalTime : "00:05:47",
+    //         images : [ "efwefcde.jpg" , "efedfcerd.jpg" , "edwefdewdfc.png"],
+    //         notes : "wrdwedcwedcfdc",
+    //         status : "completed"
+    //     }, {
+    //         location : "Neyveli",
+    //         startTime : "01:45:47 pm",
+    //         endTime : "01:50:47 pm",
+    //         totalTime : "00:05:47",
+    //         images : [ "efwefcde.jpg" , "efedfcerd.jpg" , "edwefdewdfc.png"],
+    //         notes : "wrdwedcwedcfdc",
+    //         status : "completed"
+    //     }
+    //     ]
+    // }

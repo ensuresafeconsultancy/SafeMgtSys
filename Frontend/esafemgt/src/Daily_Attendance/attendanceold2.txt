@@ -1,0 +1,461 @@
+import { useState, useEffect } from 'react';
+import { FaPlus } from "react-icons/fa6";
+import { AiOutlineCarryOut } from "react-icons/ai";
+// import { MdOutlineLunchDining } from "react-icons/md";
+import { submitCheckInTime, checkInList, empCheckOut } from './apiCall';
+import Timer from './timer';
+
+const Attendance = () => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [location, setLocation] = useState('');
+    const [geoPhotos, setGeoPhotos] = useState([]);
+    const [notes, setNotes] = useState('');
+    const [currentViewNotes, setCurrentViewNotes] = useState('');
+    const [empCheckInList, setEmpCheckIn] = useState({});
+
+    const fetchCheckInList = async () => {
+      const response = await checkInList();
+      if (response.data.status === 1) {
+        console.log("response.data.currentCheckIn = ", response.data.empCheckInList.currentCheckIn);
+        setEmpCheckIn(()=>response.data.empCheckInList);
+      }
+    };
+
+    useEffect(() => {
+      fetchCheckInList();
+    }, []);
+
+      const submitCheckin = async (event) => {
+        event.preventDefault();
+        console.log("location = ", location);
+        console.log("geoPhotos = ", geoPhotos);
+        const response = await submitCheckInTime(location, notes, geoPhotos);
+
+        if(response){
+          setEmpCheckIn(()=>response.data.updatedEmployee);
+          setLocation(()=>'')
+          setGeoPhotos(()=>[])
+          document.getElementById("closeModalButton").click();
+        }
+      };
+
+    const updateViewNotes = (value) => {
+      setCurrentViewNotes(value);
+    };
+
+
+    const handleInput = (event) => {
+      const value = event.target.value;
+      if (event.target.id === "location") {
+        setLocation(value);
+      } else if (event.target.id === "notes") {
+        setNotes(value);
+      }
+    };
+
+    const handleFileChange = (event) => {
+      const selectedFiles = event.target.files;
+      setGeoPhotos(selectedFiles);
+    };
+
+    
+
+    console.log("EmpCheckInList = ", empCheckInList);
+
+    const fetchCurrentWorkLocation = () => {
+      console.log("Fetching current working location...");
+      if (empCheckInList.currentCheckIn && empCheckInList.records.length > 0) {
+        console.log("work started ..");
+        return empCheckInList.records[empCheckInList.records.length - 1].location;
+      }
+      return '';
+    };
+
+    const updateCurrentTime = () => {
+      setCurrentTime(new Date());
+    };
+
+    const checkOut = async () => {
+      const empId = '2345';
+      const response = await empCheckOut(empId, empCheckInList.records.length - 1);
+      if (response) {
+        setEmpCheckIn(()=>response.data.updatedEmployee);
+        console.log("super");
+      }
+    };
+
+    const convertMinutesToHMS = (totalMinutes) => {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m`;
+    };
+
+    const findTimerStartTime = () => {
+      if (empCheckInList.currentCheckIn && empCheckInList.records.length > 0) {
+        return empCheckInList.records[empCheckInList.records.length - 1].createdAt;
+      }
+      return null;
+    };
+
+    const findTotalHoursWorked = () => {
+      if (empCheckInList) {
+        const hours = Math.floor(empCheckInList.totalTimeWorked / 60);
+        const minutes = empCheckInList.totalTimeWorked % 60;
+        return `${String(hours).padStart(2, '0')}hrs :${String(minutes).padStart(2, '0')}min`;
+      }
+      return '00hrs :00min';
+    };
+
+
+    
+  
+
+  return (
+    <div className="container" id="Attendance">
+      {/* <!-- Modal --> */}
+      <div
+        className="modal fade"
+        id="exampleModal"
+        tabIndex="-1"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="exampleModalLabel">
+                Check In
+              </h1>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                id='closeModalButton'
+              ></button>
+            </div>
+            <form action="" onSubmit={(event)=>submitCheckin(event)} >
+            <div className="modal-body">
+              
+                {/* <h5>Start Time : {currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</h5> */}
+                {/* <h5>Start Time : {currentTime.toLocaleTimeString()}</h5> */}
+                <div className="form-group py-2">
+                  <label htmlFor="" className="form-label">
+                    Start Time :
+                  </label>
+                  <input type="text" className="form-control" value={currentTime.toLocaleTimeString()} disabled/>
+                </div>
+                <div className="form-group py-2">
+                  <label htmlFor="" className="form-label">
+                    Work Location :
+                  </label>
+                  <input type="text" value={location} onChange={(e)=>handleInput(e)} id="location" className="form-control" required />
+                </div>
+                <div className="form-group py-2">
+                  <label htmlFor="" className="form-label">
+                    Upload Geo tag photo:
+                  </label>
+                  <input type="file" className="form-control" onChange={(e)=>handleFileChange(e)}  multiple required />
+                </div>
+                <div className="form-group py-2">
+                  <label htmlFor="" className="form-label">
+                    Additional Notes :
+                  </label>
+                  <div className="">
+                      
+                    <textarea name="" cols="" className='w-100' value={notes} id="notes" onChange={(e)=>handleInput(e)} rows="4"></textarea>
+                  </div>
+                </div>
+            
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                Check In
+              </button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+   
+      {/* view notes  */}
+      <div className="modal fade" id="exampleModal2" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              {currentViewNotes}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              {/* <button type="button" className="btn btn-primary">Save changes</button> */}
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+ 
+
+
+      <div className="row pt-5">
+        <div className="col"></div>
+        <div className="col-8">
+            <div className="row">
+                <div className="col">
+                <div className="text-center p-3 border rounded-4 bg-light">
+
+
+                  {empCheckInList.currentCheckIn? 
+
+                  <>
+                      <h3 className="text-center fw-bold">Current Work</h3>
+                      <h4>{fetchCurrentWorkLocation()}</h4>
+                      <h4><Timer startTime={findTimerStartTime()} /></h4>
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                      <button type="button" className="btn btn-primary">
+                        Edit
+                        </button>
+                      <button type="button" className="btn btn-danger" onClick={()=>checkOut()}>
+                          Check out
+                        </button>
+
+                      </div>
+                     
+                  </>
+
+                  :
+
+                  <div className='d-flex justify-content-center align-items-center gap-2'>
+                    <div  data-bs-toggle="modal" onClick={()=>updateCurrentTime()} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
+                    <AiOutlineCarryOut className='fs-3' />
+                      Check In
+                    </div>
+                    {/* <div className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column lunchAssign ">
+                    <MdOutlineLunchDining  className='fs-3' />
+                      Lunch
+                    </div> */}
+                
+                  </div>
+
+                  
+                }
+
+                  
+                </div>
+                <div className="text-center p-3 border rounded-4 bg-light mt-2">
+                    <h6>Total Hours Worked </h6>
+                    {/* <h5 className='fw-bold'>06hrs : 45min : 30sec</h5> */}
+                    <h5 className='fw-bold'>{findTotalHoursWorked()}</h5>
+                </div>
+
+                </div>
+                <div className="col">
+                    <div  className="text-center p-3 border rounded-4 bg-light">
+                        <table className='table'>
+                            <thead>
+                                <tr>
+                                    <th>Shift</th>
+                                    <th>Day</th>
+                                </tr>
+                                <tr>
+                                    <th>Shift Timing</th>
+                                    <th>09:00 AM - 06:00 PM</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div  className="text-center p-3 border rounded-4 bg-light mt-2">
+                        <table className='table'>
+                            <thead>
+                                <tr>
+                                    <th>Late</th>
+                                    <th>00hrs: 05mins : 12sec</th>
+                                </tr>
+                                <tr>
+                                    <th>over Time</th>
+                                    <th>00hrs: 45mins : 45sec</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+          
+
+
+        </div>
+        <div className="col"></div>
+      </div>
+
+      <div className="row pt-5">
+        <div className="col"></div>
+        <div className="col-10">
+          <div className="">
+            <table className="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Work Location</th>
+                  <th scope="col">Start time</th>
+                  <th scope="col">End time</th>
+                  <th scope="col">Total time</th>
+                  <th scope="col">Image</th>
+                  <th scope="col">Comments</th>
+                  <th scope="col">Status</th>
+                  {/* <th scope="col">Action</th> */}
+                </tr>
+              </thead>
+              <tbody>
+              {empCheckInList.records && empCheckInList.records.map((record, index) => (
+                    <tr key={index}>
+                      <th scope='row'>{index + 1}</th>
+                      <td>{record.location}</td>
+                      <td>{record.startTime}</td>
+                      <td className='text-center'>{record.endTime? record.endTime : '-'}</td>
+                      <td className='text-center'>{record.totalTime? convertMinutesToHMS(record.totalTime) : '-'}</td>
+                      <td>{record.images &&
+                            record.images.map((itemFile, index) => {
+                              return (
+                                <div
+                                  className="d-flex justify-content-between align-items-center"
+                                  key={index}
+                                >
+                                  <span
+                                    
+                                    className="text-truncate cursor_pointer fileName "
+                                    style={{ maxWidth: "150px" }}
+                                  >
+                                    {itemFile.substr(0, 23).concat("...") +
+                                      itemFile.split(".")[1]}
+                                  </span>
+
+
+                            <div className="d-flex justify-content-center align-items-center">
+
+                                  <span
+                                    
+                                    className="text-success cursor_pointer  rounded-circle download_bg"
+                                  >
+                                    {/* <MdDownloadForOffline className="downloadIcon rounded-circle" /> */}
+
+                                    
+                                  </span>
+                                  <span className="text-success cursor_pointer  rounded-circle download_bg">
+                                      {/* <MdDelete
+                                  className="actionIcon p-2 rounded-circle cursor_pointer deleteIcon"
+                                  onClick={() => deletePhoto(item._id , index)}
+                                /> */}
+
+                                  </span>
+
+
+                                  </div>
+                                 
+                                </div>
+                              );
+                            })}</td>
+                      <td><button className='btn btn-primary' onClick={()=>updateViewNotes(record.notes)} data-bs-toggle="modal" data-bs-target="#exampleModal2" >View Comments</button></td>
+                      <td>{record.status ==="Check In"? 
+
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                        <button type="button" className="btn btn-danger" onClick={()=>checkOut()}>
+                          Check out
+                        </button>
+                      </div>
+                      
+                      :
+
+                      <div className="d-flex justify-content-center align-items-center">
+                        <button type="button" className="btn btn-success">
+                            Completed
+                        </button>
+                      </div>
+
+                    
+                    }</td>
+                      {/* <td>
+
+                        {record.status ==="Check In"? 
+
+                        
+                        <div className="d-flex justify-content-center align-items-center gap-2">
+                        <button type="button" className="btn btn-primary">
+                        Edit
+                        </button>
+                        <button type="button" className="btn btn-danger">
+                        Delete
+                        </button>
+                        </div>
+
+                        :
+
+                        "-"
+                        
+                      
+                      }
+                        
+                      
+                      </td> */}
+                    </tr>
+                  ))}
+          
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            className="text-center d-flex justify-content-center align-items-center"
+            id="plusBtn"
+          >
+
+            {!empCheckInList.currentCheckIn?
+            
+            <div
+              className="plusBtnBox p-2 rounded-circle d-flex justify-content-center align-items-center cursor_pointer"
+              data-bs-toggle="modal"
+              data-bs-target="#exampleModal"
+            >
+              <FaPlus className="fs-4" onClick={()=>updateCurrentTime()} />
+            </div>
+
+        : ""
+         }
+            
+          </div>
+        </div>
+        <div className="col"></div>
+      </div>
+    </div>
+  );
+};
+
+export default Attendance;
+
+
+ {!empCheckInList.currentCheckIn?
+            
+            <div
+              className="plusBtnBox p-2 rounded-circle d-flex justify-content-center align-items-center cursor_pointer"
+              data-bs-toggle="modal"
+              data-bs-target="#exampleModal"
+            >
+              <FaPlus className="fs-4" onClick={()=>updateCurrentTime()} />
+            </div>
+
+        : ""
+         }

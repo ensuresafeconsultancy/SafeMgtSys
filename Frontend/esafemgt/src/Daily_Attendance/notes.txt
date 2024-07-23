@@ -1,0 +1,313 @@
+  // function splitHMS(value){
+    //   let dateArr = value.split('T')
+    //   dateArr = dateArr[1].split('.');
+    //   return dateArr[0];
+    // }
+
+    // let startTime = '11:00:00';
+    // const startDate = new Date(`1970-01-01T07:19:13.994+00:00`);
+
+    // // Calculate the end date by adding a large number of milliseconds
+    // const endDate = new Date(startDate.getTime() + 1000 * 60 * 60 * 24 * 365); // Add one year
+  
+    // const renderer = ({ hours, minutes, seconds }) => {
+    //   return `${hours}:${minutes}:${seconds}`;
+    // };
+
+
+
+    // useEffect(() => {
+    //     const timer = setInterval(() => {
+    //       setCurrentTime(new Date());
+    //     }, 1000); // Update every second
+      
+    //     return () => clearInterval(timer); // Cleanup function to clear interval on unmount
+    //   }, []); // Empty dependency array to run the effect only once
+      
+
+    // const fetchChekInList = async()=>{
+    //   const response = await checkInList();
+    //   if(response.data.status == 1){
+    //     setEmpCheckIn(()=>response.data.EmpCheckInList);
+    //   }
+    // }
+    // useEffect(() => {
+    //   fetchChekInList();
+    // }, []);
+
+
+
+
+
+
+
+
+
+
+
+
+          {/* <tr>
+                  <th scope="row">1</th>
+                  <td>Building 1</td>
+                  <td>10:30 Am</td>
+                  <td>11:50 PM</td>
+                  <td>01hr 20mins</td>
+                  <td>image.jpg</td>
+                  <td><button className='btn btn-primary'>View Notes</button></td>
+                  <td>
+                      <div className="d-flex justify-content-center align-items-center">
+                        <button type="button" className="btn btn-success">
+                            Completed
+                        </button>
+                      </div>
+                   
+                  </td>
+                  <td>
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                        ---
+                      </div>
+                   
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">2</th>
+                  <td>Building 2</td>
+                  <td>12:00 Am</td>
+                  <td> - </td>
+                  <td> - </td>
+                  <td>image.jpg</td>
+                  <td><button className='btn btn-primary'>View Notes</button></td>
+                  <td>
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                      <button type="button" className="btn btn-danger">
+                      Check out
+                    </button>
+                      </div>
+                   
+                  </td>
+                  <td>
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                        <button type="button" className="btn btn-primary">
+                        Edit
+                        </button>
+                        <button type="button" className="btn btn-danger">
+                        Delete
+                        </button>
+                      </div>
+                   
+                  </td>
+                </tr> */}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                 useEffect(() => {
+      const fetchCheckInList = async () => {
+        const response = await checkInList();
+        if (response.data.status === 1) {
+          console.log("response.data.currentCheckIn = " ,response.data.currentCheckIn)
+          if(response.data.currentCheckIn){
+            setWorkStarted(true);
+          }else{
+            setWorkStarted(false);
+          }
+
+          console.log("workStarted = " , workStarted)
+          setTotalTimeWorked(parseInt(response.data.totalTimeWorked))
+          setEmpCheckIn(response.data.EmpCheckInList);
+        }
+      };
+      fetchCheckInList();
+    }, []); // Empty dependency array to fetch data only once
+
+
+
+
+
+
+
+
+
+
+
+
+    ---------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    import { useState, useEffect, useRef } from 'react';
+import { FaPlus } from "react-icons/fa6";
+import { AiOutlineCarryOut } from "react-icons/ai";
+import { MdOutlineLunchDining } from "react-icons/md";
+import { submitCheckInTime , checkInList ,empCheckOut } from './apiCall';
+import Timer from './timer';
+
+const Attendance = () => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [location , setLocation] = useState('');
+    const [geoPhotos , setGeoPhotos] = useState([]);
+    const [notes , setNotes] = useState('');
+    const [currentViewNotes , setCurrentViewNotes] = useState('');
+    const [EmpCheckInList , setEmpCheckIn] = useState([]);
+    const [workStarted , setWorkStarted] = useState(false);
+    const [totalTimeWorked , setTotalTimeWorked] = useState(0);
+
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+      const fetchCheckInList = async () => {
+        const response = await checkInList();
+        if (isMounted.current && response.data.status === 1) {
+          console.log("response.data.currentCheckIn = ", response.data.currentCheckIn);
+          if (response.data.currentCheckIn !== workStarted) {
+            setWorkStarted(()=>response.data.currentCheckIn);
+          }
+          console.log("workStarted = ", response.data.currentCheckIn);
+          if (parseInt(response.data.totalTimeWorked) !== totalTimeWorked) {
+            setTotalTimeWorked(()=>parseInt(response.data.totalTimeWorked));
+          }
+          setEmpCheckIn(()=>response.data.EmpCheckInList);
+        }
+      };
+
+      fetchCheckInList();
+
+      return () => {
+        isMounted.current = false;
+      };
+    }, [workStarted, totalTimeWorked]);
+
+    // useEffect(() => {
+    //   const fetchCheckInList = async () => {
+    //     const response = await checkInList();
+    //     if (response.data.status === 1) {
+    //       console.log("response.data.currentCheckIn = " ,response.data.currentCheckIn)
+    //       if(response.data.currentCheckIn){
+    //         setWorkStarted(true);
+    //       }else{
+    //         setWorkStarted(false);
+    //       }
+
+    //       console.log("workStarted = " , workStarted)
+    //       setTotalTimeWorked(parseInt(response.data.totalTimeWorked))
+    //       setEmpCheckIn(response.data.EmpCheckInList);
+    //     }
+    //   };
+    //   fetchCheckInList();
+    // }, []); // Empty dependency array to fetch data only once
+
+   
+
+    const handleInput = (event)=>{
+      const value = event.target.value;
+
+      if(event.target.id == "location"){
+        setLocation(()=>value);
+      }else if(event.target.id == "notes"){
+        setNotes(()=>value)
+      }
+    }
+
+    const handleFileChange = (event) => {
+      const selectedFiles = event.target.files;
+      setGeoPhotos(selectedFiles); // Store the selected files directly
+    };
+
+    const submitCheckin = async(event)=>{
+      event.preventDefault();
+
+      console.log("location = " , location)
+      console.log("geoPhotos = " , geoPhotos)
+
+      await submitCheckInTime(location, notes, geoPhotos);
+    }
+
+    const updateViewNotes = (value)=>{
+      setCurrentViewNotes(()=>value)
+    }
+
+    console.log("EmpCheckInList = " , EmpCheckInList)
+
+   
+    const fetchCurrentWorkLocation =  ()=>{
+
+      console.log("Fetching current working location...");
+      if(workStarted){
+        console.log("work started ..")
+        return EmpCheckInList[EmpCheckInList.length - 1].location;
+      }
+
+
+    }
+    
+
+    const updateCurrentTime = ()=>{
+      setCurrentTime(()=> new Date());
+    }
+
+    const checkOut = async(index)=>{
+
+      const empId = '2345';
+
+      const response = await empCheckOut(empId , index);
+
+      if(response){
+        console.log("super")
+      }
+
+    }
+
+    function convertMinutesToHMS(totalMinutes) {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      // const seconds = 0; // Assuming you want seconds to be always 0
+    
+      const formattedTime = `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m`;
+      return formattedTime;
+    }
+
+
+   
+   
+  
+    const findTimerStartTime = ()=>{
+      if(workStarted){
+        return EmpCheckInList[EmpCheckInList.length - 1].createdAt;
+      }
+    }
+
+    const findTotalHoursWorked = ()=>{
+
+      if(EmpCheckInList){
+
+        const hours = Math.floor(totalTimeWorked / 60);
+        const minutes = totalTimeWorked % 60;
+
+        return  `${String(hours).padStart(2, '0')}hrs :${String(minutes).padStart(2, '0')}min`
+      }
+    }

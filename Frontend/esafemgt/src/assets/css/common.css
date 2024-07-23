@@ -1,0 +1,7 @@
+.cursor_pointer{
+    cursor: pointer;
+}
+
+*{
+    box-sizing: border-box !important;
+}

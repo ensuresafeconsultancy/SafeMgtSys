@@ -1,0 +1,54 @@
+router.get("/checkInList",async(req, res)=>{
+    try{
+
+        const empCheckInList = await EmpAttendance.findOne({empId:'2345'});
+
+        // const formattedCheckInList = EmpCheckInList.records.map(record => {
+        //   const startTime = record.startTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+        //   const endTime = record.endTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+        //   // You can also format endTime here if needed
+        //   return {
+        //     ...record,
+        //     startTime,
+        //     endTime
+        //   };
+        // });
+
+        // let checkDate = EmpCheckInList.records[0].startTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+        // console.log("checkDate = " , checkDate)
+        // EmpCheckInList.records[0].startTime = checkDate;
+        // console.log("EmpCheckInList.records[0].startTime " , EmpCheckInList.records[0].startTime)
+        // EmpCheckInList.records[0].endTime = EmpCheckInList.records[0].endTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+        res.send({status : 1 , empCheckInList : empCheckInList})
+        // res.send({status : 1 , empCheckInList : empCheckInList.records , currentCheckIn : EmpCheckInList.currentCheckIn , totalTimeWorked : EmpCheckInList.totalTimeWorked})
+
+    }catch(err){
+        res.send("some problem")
+    }
+})
+
+
+
+
+
+
+
+// const fetchEmployee = await EmpAttendance.findOne(
+//   { empId : empId, currentCheckIn: true });
+//   console.log("updatedEmployee = " , fetchEmployee)
+  
+// let startTime = fetchEmployee.records[0].startTime;
+
+// let startTimeArr = startTime.split(':')
+
+// let currentTime = currentDateAndTime.toLocaleTimeString('en-US', { hour12: false });
+// let endTimeArr = currentTime.split(":");
+
+// let hourDiffrence = startTimeArr[0] - endTimeArr[0];
+// let minDiffrence = startTimeArr[1] - endTimeArr[1];
+
+// console.log("startTimeArr[1]  = " , startTimeArr[1] )
+// console.log("endTimeArr[1]  = " , endTimeArr[1] )
+// console.log("hourDiffrence = " , hourDiffrence)
+// console.log("minDiffrence = " , minDiffrence)
