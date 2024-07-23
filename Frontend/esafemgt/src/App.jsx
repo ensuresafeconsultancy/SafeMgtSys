@@ -4,12 +4,30 @@ import './App.css'
 import Attendance from './Daily_Attendance/Attendance'
 
 import './assets/css/dailyAttendance.css'
+
+import {BrowserRouter as Router , Routes , Route} from 'react-router-dom'
 function App() {
 
   return (
     <>
       {/* <DailyAttendance /> */}
-      <Attendance />
+     
+
+      <Router>
+
+          <Routes>
+
+            <Route path="" element={ <Attendance />} />
+
+            
+          </Routes>
+
+
+
+
+      </Router>
+
+
     </>
   )
 }

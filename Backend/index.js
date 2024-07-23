@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 // require('dotenv').config(); // Load environment variables
 
 const ATTENDANCE = require('./controllers/attendance');
+const ADMIN_ATTENDANCE = require('./controllers/Admin/attendance');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -58,6 +59,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/DailyAttendance')
 
 // Mount attendance routes
 app.use('/attendance', ATTENDANCE);
+app.use('/admin/attendance', ADMIN_ATTENDANCE);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

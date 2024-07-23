@@ -5,7 +5,7 @@ import { AiOutlineCarryOut } from "react-icons/ai";
 import { submitCheckInTime, checkInList, empCheckOut } from './apiCall';
 import axios from 'axios';
 import Timer from './timer';
-
+import '../../assets/css/dailyAttendance.css'
 const Attendance = () => {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [location, setLocation] = useState('');
@@ -163,25 +163,6 @@ const Attendance = () => {
     }
 
 
-    // function checkForLate2(shiftStartTime) {
-    //   const currentTime = new Date();
-    
-    //   // Convert shiftStartTime to 24-hour format
-    //   const [shiftHour, shiftMinute] = shiftStartTime.split(':');
-    //   const shiftHour24 = parseInt(shiftHour, 10);
-    
-    //   // Create Date objects for comparison
-    //   const shiftTime = new Date();
-    //   shiftTime.setHours(shiftHour24, parseInt(shiftMinute, 10));
-    //   shiftTime.setMinutes(0);
-    //   shiftTime.setSeconds(0);
-
-    //   console.log("shiftTime = " , shiftTime)
-    //   console.log("currentTime check = " , currentTime)
-    
-    //   return currentTime > shiftTime;
-    // }
-
     const checkForLate = ()=>{
 
       console.log("currentTime = " , currentTime.toLocaleTimeString())
@@ -207,12 +188,7 @@ const Attendance = () => {
       
         return currentTime > shiftTime;
     
-        // checkForLate2(shiftStartTime)
-  
-        // return true;
       }
-
-    
 
     }
 
@@ -393,6 +369,10 @@ const Attendance = () => {
                         <table className='table'>
                             <thead>
                                 <tr>
+                                    <th>Date</th>
+                                    <th>{currentTime.toLocaleDateString()}</th>
+                                </tr>
+                                <tr>
                                     <th>Shift</th>
                                     <th>Day</th>
                                 </tr>
@@ -556,9 +536,9 @@ const Attendance = () => {
 
 : "" }
 
-<button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sampleShift">
+{/* <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sampleShift">
   Shift demo modal
-</button>
+</button> */}
 
 
 <div className="modal fade" id="sampleShift" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -589,7 +569,7 @@ const Attendance = () => {
   </div>
 </div>
 
-<button onClick={()=>submitEmp()}>Submit emp</button>
+{/* <button onClick={()=>submitEmp()}>Submit emp</button> */}
 
     </div>
   );

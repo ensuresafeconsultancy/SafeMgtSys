@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { APIURL } from '../APIURL/apiUrl';
-import { SERVER_VARIABLES } from '../ServerVariables/serverVariables';
+import { APIURL } from '../../APIURL/apiUrl'
+import { SERVER_VARIABLES } from '../../ServerVariables/serverVariables';
 import Swal from 'sweetalert2';
 
-function checkConnection() {
+export function checkConnection() {
     if (navigator.onLine) {
       console.log("You are online");
       return true;

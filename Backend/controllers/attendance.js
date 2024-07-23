@@ -42,10 +42,9 @@ router.get("/checkInList/:employeeId",async(req, res)=>{
     try{
 
       const { employeeId } = req.params;
-        const empCheckInList = await EmployeeAttendance.findOne({empId:employeeId});
+      const empCheckInList = await EmployeeAttendance.findOne({empId:employeeId});
 
 
-        
       if (!empCheckInList) {
 
         const employeeData = await Employee.findById(employeeId);
@@ -56,7 +55,6 @@ router.get("/checkInList/:employeeId",async(req, res)=>{
         const dateAndTime = new Date();
         console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
         const currentDate = dateAndTime.toLocaleDateString();
-
 
         // User not found, create a new user with the first record
         const userData = {
@@ -79,7 +77,7 @@ router.get("/checkInList/:employeeId",async(req, res)=>{
 
 
 
-        res.send({status : 1 , empCheckInList : empCheckInList})
+      res.send({status : 1 , empCheckInList : empCheckInList})
 
     }catch(err){
         res.send("some problem")
