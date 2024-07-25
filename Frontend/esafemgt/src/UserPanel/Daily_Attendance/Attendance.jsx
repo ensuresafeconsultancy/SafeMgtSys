@@ -15,7 +15,8 @@ const Attendance = () => {
     const [empCheckInList, setEmpCheckIn] = useState({});
 
     const fetchCheckInList = async () => {
-      const response = await checkInList("669b70de7f081744a4a62128");
+      // const response = await checkInList("669b70de7f081744a4a62128");
+      const response = await checkInList();
       if (response && response.data.status === 1) {
         if(response.data.empCheckInList && response.data.empCheckInList.currentCheckIn){
           console.log("response.data.currentCheckIn = ", response.data.empCheckInList.currentCheckIn);
@@ -33,7 +34,7 @@ const Attendance = () => {
       event.preventDefault();
       console.log("location = ", location);
       console.log("geoPhotos = ", geoPhotos);
-      const response = await submitCheckInTime(location, lateReason, geoPhotos);
+      const response = await submitCheckInTime(location, lateReason, geoPhotos , empCheckInList._id);
 
       if(response){
         setEmpCheckIn(()=>response.data.updatedEmployee);
@@ -84,8 +85,8 @@ const Attendance = () => {
     };
 
     const checkOut = async () => {
-      const empId = '669b70de7f081744a4a62128';
-      const response = await empCheckOut(empId, empCheckInList.records.length - 1);
+      // const empId = empCheckInList._id;
+      const response = await empCheckOut(empCheckInList.records.length - 1);
       if (response) {
         setEmpCheckIn(()=>response.data.updatedEmployee);
         console.log("super");
@@ -152,7 +153,8 @@ const Attendance = () => {
       console.log("id = " ,_id)
 
    
-      let shift = _id;
+      // let shift = _id;
+      let shift = "669b70d77f081744a4a62125";
       const response = await axios.post("http://localhost:3000/attendance/addEmployee" , {shift : shift})
 
       if(response){

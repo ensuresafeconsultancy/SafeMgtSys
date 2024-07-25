@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 const moment = require('moment');
 
 const employeeSchema = new mongoose.Schema({
-  employeeName: { type: String, required: true },
   employeeId: { type: String, required: true, unique: true }, // Ensure unique employee IDs
+  employeeName: { type: String, required: true },
+  employeeEmail : { type: String , required: true },
+  password : { type : String , required : true },
   shift: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Shift', // Reference the Shift model
@@ -30,6 +32,7 @@ const employeeAttendanceSchema = new mongoose.Schema({
       ref: 'Employee', // Reference the Employee model
       required: true
     },
+    employeeName: { type: String, required: true },
     date: String, // Consider using Date type for better querying
     currentCheckIn : Boolean,
     shift : String,

@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 
 const ATTENDANCE = require('./controllers/attendance');
 const ADMIN_ATTENDANCE = require('./controllers/Admin/attendance');
+const EMPLOYEE_AUTH = require('./Authentication/Employee');
+const ADMIN_AUTH = require('./Authentication/Admin');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -58,8 +60,16 @@ mongoose.connect('mongodb://127.0.0.1:27017/DailyAttendance')
   
 
 // Mount attendance routes
-app.use('/attendance', ATTENDANCE);
-app.use('/admin/attendance', ADMIN_ATTENDANCE);
+const authMiddleware = require('./Authentication/authMiddleware'); // Assuming authMiddleware is in a separate file
+
+
+app.use('/attendance', authMiddleware, ATTENDANCE);
+app.use('/admin/attendance', authMiddleware , ADMIN_ATTENDANCE);
+
+app.use('/auth/employeeAuth', EMPLOYEE_AUTH);
+app.use('/auth/adminAuth', ADMIN_AUTH);
+
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

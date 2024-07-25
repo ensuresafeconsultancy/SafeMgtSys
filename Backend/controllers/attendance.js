@@ -2,9 +2,11 @@ require('dotenv').config();
 const express = require('express')
 const router = express.Router();
 
+const authMiddleware = require('../Authentication/authMiddleware')
 
 const fs = require('fs')
 const path = require('path')
+const bcrypt = require('bcrypt');
 
 const { Employee , EmployeeAttendance , Shift } = require('../schema/employeeSchema')
 // const shiftSchema = require('../schema/shiftSchema')
@@ -38,11 +40,20 @@ router.get('/openFile/:fileId', async (req, res) => {
 });
 
 
-router.get("/checkInList/:employeeId",async(req, res)=>{
+// router.get("/checkInList/:employeeId" ,async(req, res)=>{
+router.get("/checkInList", authMiddleware ,async(req, res)=>{
     try{
 
-      const { employeeId } = req.params;
-      const empCheckInList = await EmployeeAttendance.findOne({empId:employeeId});
+      // const { employeeId } = req.params;
+      console.log(req.user);
+      const { employeeId } = req.user;
+      const { employeeName } = req.user;
+
+      const dateAndTime = new Date();
+      console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
+      const currentDate = dateAndTime.toLocaleDateString();
+
+      const empCheckInList = await EmployeeAttendance.findOne({empId:employeeId , date : currentDate});
 
 
       if (!empCheckInList) {
@@ -52,13 +63,11 @@ router.get("/checkInList/:employeeId",async(req, res)=>{
         const shiftData = await Shift.findById(employeeData.shift);
         console.log("shiftData = " , shiftData)   
         
-        const dateAndTime = new Date();
-        console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
-        const currentDate = dateAndTime.toLocaleDateString();
-
+        
         // User not found, create a new user with the first record
         const userData = {
-          empId: '669b70de7f081744a4a62128',
+          empId: employeeId,
+          employeeName,
           date: currentDate,
           currentCheckIn: false,
           shift: shiftData.shiftName,
@@ -85,17 +94,18 @@ router.get("/checkInList/:employeeId",async(req, res)=>{
 })
 
 
-router.post("/empCheckOut/:empId/:index" , async(req , res)=>{
+router.post("/empCheckOut/:index" , async(req , res)=>{
 
   try{
     console.log("empCheckOut");
 
     const currentDateAndTime = new Date();
-    const empId = req.params.empId;
+    // const empId = req.params.empId;
+    const {employeeId} = req.user;
     const recordIndex = parseInt(req.params.index); // Convert index to a number
 
     // Find the employee record with matching empId and record index
-    const employee = await EmployeeAttendance.findOne({ empId : empId, currentCheckIn: true });
+    const employee = await EmployeeAttendance.findOne({ empId : employeeId, date : currentDateAndTime.toLocaleDateString() , currentCheckIn: true });
 
     if (!employee) {
       console.error("Employee or record not found");
@@ -127,15 +137,12 @@ router.post("/empCheckOut/:empId/:index" , async(req , res)=>{
     employee.totalTimeWorked += record.totalTime;
     
 
-    
-    
-
     console.log("timeDiffMs = " , timeDiffMs)
 
     // Update the employee record with the modified record
     const updatedEmployee = await employee.save();
 
-    console.log("Check-out successful for employee:", empId);
+    console.log("Check-out successful for employee:", employeeId);
     res.send({status : 1, message: "Check-out successful" , updatedEmployee : updatedEmployee});
         
 
@@ -149,9 +156,11 @@ router.post("/empCheckOut/:empId/:index" , async(req , res)=>{
 router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) => {
   try {
     const { location } = req.body;
-    
+
     const lateReason = req.body.lateReason;
-    const employeeId = req.body.empId;
+    // const employeeId = req.body.empId;
+    const { employeeId } = req.user;
+    const { employeeName } = req.user;
 
     const employeeData = await Employee.findById(employeeId);
     console.log("employeeData=" , employeeData)
@@ -196,7 +205,8 @@ router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) =>
       if (!user) {
         // User not found, create a new user with the first record
         const userData = {
-          empId: '669b70de7f081744a4a62128',
+          empId: employeeId,
+          employeeName,
           date: currentDate,
           currentCheckIn: true,
           shift: shiftData.shiftName,
@@ -277,8 +287,11 @@ router.post("/addEmployee" , async(req,res)=>{
 
     console.log("shift = " , shift)
 
-    let employeeId = '232e32fsed43ds4erd34r';
-    let employeeName = "Balaji K";
+    let employeeId = 'efwe4t54tg5r';
+    let employeeName = "Rajmohan";
+    let employeeEmail = "rajmohan@gmail.com";
+    let password = "rajmohan123";
+
     // let shiftId = "669b5b21059605890edb6865";
 
     console.log("helllo")
@@ -303,7 +316,11 @@ router.post("/addEmployee" , async(req,res)=>{
     }
     console.log("helllo")
 
-    const newEmployee = new Employee({ employeeId: employeeId, employeeName: employeeName, shift : shift });
+    const saltRounds = 10; // Adjust saltRounds based on security requirements
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+
+    const newEmployee = new Employee({ employeeId: employeeId, employeeName: employeeName, employeeEmail : employeeEmail, password : hashedPassword,  shift : shift });
     const response = await newEmployee.save();
     if(response){
       console.log(response)

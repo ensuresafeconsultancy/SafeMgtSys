@@ -1,25 +1,38 @@
-import React , {useState} from 'react'
+import {useState , useEffect} from 'react'
 
-import { fetchEmpAttRecords } from "../apiCall";
+// import { fetchEmpAttRecords ,fetchEmpAttendanceApi } from "../apiCall";
+import { fetchEmpAttendanceApi } from "../apiCall";
 import { convertMinutesToHMS } from '../../Utils/attendanceCommonFun';
 const AttendaceRecord = () => {
 
+    const [attendanceList , setAttendanceList] = useState([]);
     const [attendanceRecords , setAttendanceRecords] = useState([]);
 
 
-    const fetchAttendanceRecords = async()=>{
+    const fetchAttendanceRecords = async(ID)=>{
 
-        const empId= "669b70de7f081744a4a62128";
-        const currentData = new Date();
-
-        const response = await fetchEmpAttRecords(empId , currentData.toLocaleDateString());
-        if(response){
-            setAttendanceRecords(response.data)
+        if(attendanceList){
+            const gotEmpRecord = attendanceList.filter((item)=> item._id == ID)
+            console.log(gotEmpRecord)
+            setAttendanceRecords(gotEmpRecord[0].records)
         }
-        console.log(response)
-        
+                
     }
 
+    const fetchEmployeeAttendance = async()=>{
+        const response = await fetchEmpAttendanceApi();
+        if(response){
+            setAttendanceList(response.data)
+        }
+    }
+
+    useEffect(()=>{
+
+        fetchEmployeeAttendance();
+
+    },[])
+
+    console.log(attendanceList)
 
 
   return (
@@ -65,19 +78,15 @@ const AttendaceRecord = () => {
                             </tr>
                         </thead>
                         <tbody style={{ overflowX : 'auto' }}>
-                           <tr className="cursor_pointer" onClick={fetchAttendanceRecords} data-bs-toggle="modal" data-bs-target="#viewRecords">
-                               <td>1.</td>
-                               <td>234434</td>
-                               <td>Balaji K</td>
-                               <td>09 : 12 AM</td>
-                          
-                           </tr>
-                           <tr>
-                               <td>2.</td>
-                               <td>56534</td>
-                               <td>Dinesh Kumar</td>
-                               <td>10 : 12 AM</td>
-                           </tr>
+
+                        {attendanceList && attendanceList.map((item, index) => (
+                            <tr data-bs-toggle="modal" data-bs-target="#viewRecords" className='cursor_pointer' key={item._id} onClick={()=>fetchAttendanceRecords(item._id)}>
+                                <td>{index + 1}.</td>
+                                <td>{item.empId}</td>
+                                <td>{item.employeeName}</td>
+                                <td>{item.records && item.records[0] ? item.records[0].startTime : '-'}</td>
+                            </tr>
+                            ))}
                         </tbody>
                     </table>
 

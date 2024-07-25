@@ -1,28 +1,36 @@
 import { useState } from 'react'
+import { employeeLogin } from './apiCall';
+
 
 const EmployeeLogin = () => {
 
     const [userCredentials , setUserCredentials] = useState({
         role : 'Employee' , 
-        userName : '',
+        email : '',
         password : ''
     })
     const [validationErrors, setValidationErrors] = useState({});
 
 
-    const handleSubmit = (event)=>{
+    const handleSubmit = async(event)=>{
         event.preventDefault();
 
         const errors = validateForm(); // Check for errors before submission
 
         if (Object.keys(errors).length === 0) {
 
-        // adminLogin(userCredentials);
-        
-        // adminRegister(formData)
-        // Submit form data (e.g., send to server using fetch or axios)
+            const response = await employeeLogin(userCredentials);
+
+            if(response){
+                window.location.href="/"
+            } else {
+                // Handle login failure (e.g., show error message)
+                console.log('Login failed');
+              }
+
+
         console.log('Submitting form data:', userCredentials);
-        // Clear form or redirect to success page
+
         } else {
             setValidationErrors(errors); // Display validation errors
         }
@@ -31,6 +39,12 @@ const EmployeeLogin = () => {
 
     const validateForm = () => {
         const errors = {};
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userCredentials.email)) {
+            alert("Invalid email format")
+      
+            errors.email = 'Invalid email format';
+          }
 
         if (userCredentials.password.length < 8) {
           alert("Password must be at least 8 characters")
@@ -43,12 +57,14 @@ const EmployeeLogin = () => {
   return (
     <form onSubmit={()=>handleSubmit(event)}>
         <div className="form-group">
-            <label htmlFor="userName" className="py-2">User Name :</label>
-            <input type="text" className="form-control" onChange={(e)=>setUserCredentials({...userCredentials , userName : e.target.value})} required />
-       
+            <label htmlFor="userEmail" className="py-2">Email :</label>
+            <input type="email" className="form-control" onChange={(e)=>setUserCredentials({...userCredentials , email : e.target.value})} required />
+            {validationErrors.email && (
+                      <div className="invalid-feedback">{validationErrors.email}</div>
+                    )}
         </div>
         <div className="form-group">
-            <label htmlFor="userName" className="py-2">Password :</label>
+            <label htmlFor="password" className="py-2">Password :</label>
             <input type="password" className="form-control" onChange={(e)=>setUserCredentials({...userCredentials , password : e.target.value})} required />
             {validationErrors.password && (
                     <div className="invalid-feedback">{validationErrors.password}</div>

@@ -4,3 +4,19 @@
     left: 50%;
     transform: translate(-50% , -50%);
 } */
+
+.loginAccount{
+    color: #000;
+    background-color: rgba(164, 224, 235, 0.404);
+}
+
+.loginAccount:hover{
+    color: #000;
+    background-color: rgb(117, 218, 236);
+}
+
+.loginAccActive{
+    font-weight: bold;
+    color: #000;
+    background-color: rgb(117, 218, 236);
+}

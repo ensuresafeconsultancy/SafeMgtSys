@@ -4,5 +4,9 @@ export const SERVER_VARIABLES = {
     checkInList : '/attendance/checkInList',
     empCheckOut : '/attendance/empCheckOut',
 
-    fetchEmployeeAttendanceRecords : '/admin/attendance/fetchEmployeeAttendanceRecords'
+    fetchEmployeeAttendance : '/admin/attendance/fetchEmployeeAttendance',
+    fetchEmployeeAttendanceRecords : '/admin/attendance/fetchEmployeeAttendanceRecords',
+    employeeLogin : '/auth/employeeAuth/login',
+    adminLogin : '/auth/adminAuth/login',
+    adminRegister : '/auth/adminAuth/register',
 }
