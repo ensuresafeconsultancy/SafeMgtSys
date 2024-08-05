@@ -1,0 +1,16 @@
+{/* <tbody>
+<% formDoc && formDoc.forEach((item, index) => { %>
+  <tr>
+    <td><%= index + 1 %></td>  
+    <td><%= item.date %></td>
+    <td><%= item.shift %></td>
+    <td><%= item.shiftStartTime  %> - <%= item.shiftEndTime  %></td>
+    <td><%= item.totalTimeWorked %></td>
+    <td><%= item.lateTime %></td>
+    <td><%= item.lateReason %></td>  
+
+  
+    </tr>
+<% }); %>
+  
+</tbody> */}

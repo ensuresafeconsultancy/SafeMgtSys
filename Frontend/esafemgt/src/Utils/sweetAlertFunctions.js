@@ -16,6 +16,14 @@ export const closeAlert = ()=>{
     Swal.close();
 }
 
+export const showAlert=(icon, title, text)=>{
+  Swal.fire({
+      icon: icon,
+      title: title,
+      text: text
+  });
+}
+
 export const showSuccessAlert=()=> {
   Swal.fire({
     icon: 'success',

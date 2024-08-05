@@ -33,7 +33,7 @@ export const submitCheckInTime = async(location ,lateReason, geoPhotos)=>{
                         newFormData.append('location' , location)
                     }
                     if(lateReason){
-                        newFormData.append('notes' , lateReason)
+                        newFormData.append('lateReason' , lateReason)
                     }
                     for(let i=0;i<geoPhotos.length;i++){
                         newFormData.append('geoPhotos' , geoPhotos[i])

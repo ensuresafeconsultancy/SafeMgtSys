@@ -1,13 +1,39 @@
 import {useState , useEffect} from 'react'
 
 // import { fetchEmpAttRecords ,fetchEmpAttendanceApi } from "../apiCall";
-import { fetchEmpAttendanceApi } from "../apiCall";
+import { fetchEmpAttendanceApi , downloadMonAttendanceApi } from "../apiCall";
 import { convertMinutesToHMS } from '../../Utils/attendanceCommonFun';
+import { IoMdDownload } from "react-icons/io";
+import { FaEye } from "react-icons/fa";
+
+import '../../assets/css/adminAttendanceRecords.css'
 const AttendaceRecord = () => {
 
     const [attendanceList , setAttendanceList] = useState([]);
     const [attendanceRecords , setAttendanceRecords] = useState([]);
 
+
+    useEffect(()=>{
+
+        fetchEmployeeAttendance();
+
+    },[])
+   
+
+    const fetchEmployeeAttendance = async()=>{
+        const response = await fetchEmpAttendanceApi();
+        if(response){
+            setAttendanceList(response.data)
+        }
+    }
+
+    console.log(attendanceList)
+
+    const downloadMonthlyAttendance = async(employeeId , month)=>{
+
+        await downloadMonAttendanceApi(employeeId , month);
+
+    }
 
     const fetchAttendanceRecords = async(ID)=>{
 
@@ -19,20 +45,10 @@ const AttendaceRecord = () => {
                 
     }
 
-    const fetchEmployeeAttendance = async()=>{
-        const response = await fetchEmpAttendanceApi();
-        if(response){
-            setAttendanceList(response.data)
-        }
-    }
-
-    useEffect(()=>{
-
-        fetchEmployeeAttendance();
-
-    },[])
-
-    console.log(attendanceList)
+    const months = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+      ];
 
 
   return (
@@ -61,30 +77,69 @@ const AttendaceRecord = () => {
             <div className="col"></div>
         </div>
 
-        <div className="row">
+        <div className="row pt-3">
             <div className="col"></div>
-            <div className="col-lg-8 col-12">
-                <div className="">
+            <div className="col-lg-10 col-12">
+                <div className="dailyRecordsTable" >
                     <h5 className="text-center fw-bold">Today Check-in List</h5>
 
-                    <table className="table table-hover" style={{overflowX : 'auto'}}>
+                    <table className="table table-hover" >
                         <thead>
                             <tr>
                                 <th>S.No</th>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Check-in Time</th>
+                                <th>Late duration</th>
+                                <th>Late Reason</th>
+                                <th>Check-in Records</th>
+                                {/* <th>Download</th> */}
            
                             </tr>
                         </thead>
                         <tbody style={{ overflowX : 'auto' }}>
 
                         {attendanceList && attendanceList.map((item, index) => (
-                            <tr data-bs-toggle="modal" data-bs-target="#viewRecords" className='cursor_pointer' key={item._id} onClick={()=>fetchAttendanceRecords(item._id)}>
+                            <tr  className='' key={item._id} >
                                 <td>{index + 1}.</td>
-                                <td>{item.empId}</td>
+                                <td>{item.employeeId}</td>
                                 <td>{item.employeeName}</td>
                                 <td>{item.records && item.records[0] ? item.records[0].startTime : '-'}</td>
+                                <td>{item.lateTime? item.lateTime : '-'}</td>
+                                <td>{item.lateReason? item.lateReason : '-'}</td>
+                                <td>
+                                    <div className="d-flex justify-content-center align-items-center" >
+                                        <div data-bs-toggle="modal" data-bs-target="#viewRecords" onClick={()=>fetchAttendanceRecords(item._id)} className="cursor_pointer p-2 bg-light rounded-circle d-flex justify-content-center align-items-center" >
+                                             <FaEye />
+                                        </div>
+                                    </div>
+                                    
+                                   </td>
+                                <td>
+                                    
+                                <div className="d-flex justify-content-center align-items-center" >
+                                        {/* <div onClick={()=>downloadMonthlyAttendance(item.empId)} className="cursor_pointer p-2 bg-light rounded-circle d-flex justify-content-center align-items-center" >
+                                             <IoMdDownload />
+                                        </div> */}
+
+                                        <div className="dropdown">
+                                            <a className="btn btn-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <IoMdDownload />
+                                            </a>
+
+                                            <ul className="dropdown-menu">
+                                            {months.map((month, index) => (
+                                                <li key={index} onClick={() => downloadMonthlyAttendance(item.employeeId, index + 1)}>
+                                                    <a className="dropdown-item" href="#">{month}</a>
+                                                </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                 
+                                    
+                                    </td>
                             </tr>
                             ))}
                         </tbody>
@@ -106,6 +161,8 @@ const AttendaceRecord = () => {
                 </div>
                 <div className="modal-body" style={{overflowX : 'auto'}}>
 
+                    {/* {attendanceList && attendanceList[0]? <h5>Late reason : {attendanceList[0].lateReason}</h5> : ''} */}
+
                 <table className="table table-hover" style={{overflowX : 'auto'}}>
                         <thead>
                        
@@ -117,6 +174,7 @@ const AttendaceRecord = () => {
                                 <th scope="col" className='text-nowrap'>Total time</th>
                                 <th scope="col">Image</th>
                                 <th scope="col">Status</th>
+                              
                             </tr>
                         
                         </thead>
@@ -145,6 +203,8 @@ const AttendaceRecord = () => {
                           
                         </tbody>
                     </table>
+
+                    
 
                     
                 </div>

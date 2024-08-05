@@ -1,0 +1,10 @@
+#Attendance_Records{
+    height: 110vh;
+    overflow-y: auto;
+}
+@media only screen and (min-width: 320px) and (max-width: 450px) {
+    .dailyRecordsTable {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+}

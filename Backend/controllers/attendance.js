@@ -49,24 +49,32 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
       const { employeeId } = req.user;
       const { employeeName } = req.user;
 
+      console.log("employeeId = " , employeeId)
+      console.log("employeeName = " , employeeName)
+
       const dateAndTime = new Date();
       console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
       const currentDate = dateAndTime.toLocaleDateString();
+      // const currentDate = '30/6/2024'
 
-      const empCheckInList = await EmployeeAttendance.findOne({empId:employeeId , date : currentDate});
+      const empCheckInList = await EmployeeAttendance.findOne({ employeeId: employeeId , date : currentDate });
 
-
+      console.log("helllo")
+      if(empCheckInList){
+        console.log("empCheckInList = " , empCheckInList);
+      }
       if (!empCheckInList) {
 
-        const employeeData = await Employee.findById(employeeId);
+        const employeeData = await Employee.findOne({employeeId : employeeId });
         console.log("employeeData=" , employeeData)
+        console.log("employeeData.shift=" , employeeData.shift)
         const shiftData = await Shift.findById(employeeData.shift);
         console.log("shiftData = " , shiftData)   
         
         
         // User not found, create a new user with the first record
         const userData = {
-          empId: employeeId,
+          employeeId: employeeId,
           employeeName,
           date: currentDate,
           currentCheckIn: false,
@@ -78,7 +86,7 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
 
         const newUser = new EmployeeAttendance(userData);
         const response = await newUser.save();
-        console.log(response);
+        console.log("Userdata " , response);
         res.send({  status : 1 , message: "success" , empCheckInList : response });
         return; // Exit if user is created
 
@@ -105,7 +113,9 @@ router.post("/empCheckOut/:index" , async(req , res)=>{
     const recordIndex = parseInt(req.params.index); // Convert index to a number
 
     // Find the employee record with matching empId and record index
-    const employee = await EmployeeAttendance.findOne({ empId : employeeId, date : currentDateAndTime.toLocaleDateString() , currentCheckIn: true });
+    // const employee = await EmployeeAttendance.findOne({ empId : employeeId , currentCheckIn: true });
+    const employee = await EmployeeAttendance.findOne({ employeeId : employeeId, date : currentDateAndTime.toLocaleDateString() , currentCheckIn: true });
+    // const employee = await EmployeeAttendance.findOne({ empId : employeeId, date : '30/6/2024' , currentCheckIn: true });
 
     if (!employee) {
       console.error("Employee or record not found");
@@ -162,7 +172,7 @@ router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) =>
     const { employeeId } = req.user;
     const { employeeName } = req.user;
 
-    const employeeData = await Employee.findById(employeeId);
+    const employeeData = await Employee.findOne({employeeId : employeeId });;
     console.log("employeeData=" , employeeData)
     const shiftData = await Shift.findById(employeeData.shift);
     console.log("shiftData = " , shiftData)
@@ -200,12 +210,13 @@ router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) =>
 
     // if (employeeId === '2345') {
       // Find the user with empId 2345 (replace with your finding logic)
-      const user = await EmployeeAttendance.findOne({ empId: employeeId });
+      // const user = await EmployeeAttendance.findOne({ empId: employeeId , date : '30/6/2024' });
+      const user = await EmployeeAttendance.findOne({ employeeId: employeeId , date : currentDate });
 
       if (!user) {
         // User not found, create a new user with the first record
         const userData = {
-          empId: employeeId,
+          employeeId: employeeId,
           employeeName,
           date: currentDate,
           currentCheckIn: true,
@@ -246,6 +257,9 @@ router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) =>
       
       }
 
+      if(user.currentCheckIn === true){
+        res.status(500).send("Internal server error");
+      }
 
 
       // User found, append the new record

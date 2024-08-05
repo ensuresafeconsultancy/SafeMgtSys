@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef } from 'react';
 // import { FaPlus } from "react-icons/fa6";
 import { AiOutlineCarryOut } from "react-icons/ai";
 // import { MdOutlineLunchDining } from "react-icons/md";
@@ -29,6 +29,7 @@ const Attendance = () => {
       fetchCheckInList();
     }, []);
 
+    const fileInputRef = useRef(null);
 
     const submitCheckin = async (event) => {
       event.preventDefault();
@@ -43,7 +44,8 @@ const Attendance = () => {
         if(lateReason){
           setLateReason(()=>'')
         }
-        document.getElementById("closeModalButton").click();
+        fileInputRef.current.value = null; // Reset the file input field
+      document.getElementById("closeModalButton").click();
       }
     };
 
@@ -141,8 +143,6 @@ const Attendance = () => {
       }
 
       console.log(shift , startTime , endTime)
-
-
     }
     const submitEmp = async()=>{
     
@@ -251,7 +251,7 @@ const Attendance = () => {
                   <label htmlFor="" className="form-label">
                     Upload Geo tag photo:
                   </label>
-                  <input type="file" className="form-control" onChange={(e)=>handleFileChange(e)}  multiple required />
+                  <input type="file" className="form-control"  ref={fileInputRef} onChange={(e)=>handleFileChange(e)}  multiple required />
                 </div>
 
                 {checkForLate()?

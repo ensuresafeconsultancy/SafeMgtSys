@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
 
 const employeeSchema = new mongoose.Schema({
   employeeId: { type: String, required: true, unique: true }, // Ensure unique employee IDs
@@ -11,27 +10,30 @@ const employeeSchema = new mongoose.Schema({
     ref: 'Shift', // Reference the Shift model
     required: true
   },
+  faceDescriptor: { type: [Number], required: true }
 
 });
 
 const recordSchema = new mongoose.Schema({
     location: String,
-    startTime: String, // Consider using Date type for better querying and calculations
-    endTime: String, // Consider using Date type for better querying and calculations
-    totalTime: { type: Number, default: 0 }, // Consider using Number type for calculations
+    startTime: String, 
+    endTime: String,
+    totalTime: { type: Number, default: 0 }, 
     images: [String],
     imagesIds : [String],
     notes: String,
     status: String,
     createdAt: { type: Date, default: Date.now }
 });
+
+// employeeId :  {
+//   type: mongoose.Schema.Types.ObjectId,
+//   ref: 'Employee', // Reference the Employee model
+//   required: true
+// },
   
 const employeeAttendanceSchema = new mongoose.Schema({
-    empId :  {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Employee', // Reference the Employee model
-      required: true
-    },
+    employeeId : { type: String, required: true, unique: true },
     employeeName: { type: String, required: true },
     date: String, // Consider using Date type for better querying
     currentCheckIn : Boolean,

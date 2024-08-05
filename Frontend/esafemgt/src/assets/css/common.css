@@ -4,5 +4,24 @@
 
 *{
     box-sizing: border-box !important;
+   
     /* transition: 0.1s; */
+}
+body{
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+::-webkit-scrollbar-thumb {
+   
+    background: #575c66;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-track {
+    /* background: #222a35; */
+}
+::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
 }

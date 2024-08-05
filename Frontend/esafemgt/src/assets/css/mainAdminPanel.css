@@ -1,0 +1,25 @@
+.addEmployee{
+    background-color: rgba(18, 135, 18, 0.542);
+}
+.addEmployee:hover{
+    background-color: rgb(18, 135, 18);
+    color: #fff;
+}
+
+
+
+/* --------Register---------- */
+.videoCanva {
+    width: 100%;
+    max-width: 720px;
+    height: auto;
+    margin-right: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    .videoCanva {
+      width: 100%;
+      height: auto;
+      margin-right: 0;
+    }
+  }

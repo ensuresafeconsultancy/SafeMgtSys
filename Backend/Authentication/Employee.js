@@ -31,7 +31,8 @@ router.post('/login', async (req, res) => {
       }
   
       // Generate JWT token with employee ID and role (if applicable)
-      const token = jwt.sign({ employeeId: employee._id, employeeName : employee.employeeName,  role: employee.role }, process.env.JWT_SECRET, { expiresIn: '1d' }); // Adjust expiration time as needed
+      const token = jwt.sign({ employeeId: employee.employeeId, employeeName : employee.employeeName,  role: employee.role }, process.env.JWT_SECRET, { expiresIn: '1d' }); // Adjust expiration time as needed
+      // const token = jwt.sign({ employeeId: employee._id, employeeName : employee.employeeName,  role: employee.role }, process.env.JWT_SECRET, { expiresIn: '1d' }); // Adjust expiration time as needed
   
       console.log("sucesss")
       res.json({ message: 'Login successful!', token });

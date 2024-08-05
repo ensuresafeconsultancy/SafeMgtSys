@@ -113,6 +113,15 @@ export default function Sidebar(){
                         </Link>
                     </div>
                 </div>
+                <div className="" >
+                    <div className="w-100 d-flex justify-content-start align-items-center  sidebarBtn" onClick={(event)=>handleActiveBtnChange(event)} >
+                       
+                        <Link className=" w-100 text-decoration-none d-flex justify-content-start p-3 gap-2 align-items-center text-nowrap" to="/AdminPanel/employees" >
+                        <MdSpaceDashboard className='btnIcon' />
+                             Employees
+                        </Link>
+                    </div>
+                </div>
 
                 {/* <div className="" id=''>
 

@@ -21,6 +21,7 @@
     }
     
     #page-content-wrapper {
+      /* overflow-y: auto; */
       min-width: 100vw;
     }
     

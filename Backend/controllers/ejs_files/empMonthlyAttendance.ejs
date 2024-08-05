@@ -1,0 +1,159 @@
+<%
+function convertMinutesToHMS(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, '0')}h:${String(minutes).padStart(2, '0')}m`;
+}
+
+function convertTo12HourFormat(time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const adjustedHours = hours % 12 || 12;
+    return `${String(adjustedHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+}
+
+function formatLateTime(time) {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    return `${String(hours).padStart(2, '0')}h : ${String(minutes).padStart(2, '0')}m : ${String(seconds).padStart(2, '0')}s`;
+}
+%>
+
+<html>
+
+    <head>
+       
+      
+        <style>
+            .pdfTitle{
+            text-align: center;
+            margin-top: 20px;
+            }
+            .container{
+                width: 99%;
+                margin: 10px auto;
+                /* overflow-wrap: normal; */
+                /* overflow-x: auto; */
+            }
+            .photoSize{
+                height: 120px;
+            }
+            /* Style the table itself */
+            .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            }
+    
+            /* Style the table headers */
+            .table-custom th {
+            background-color: #f2f2f2;
+            color: #333;
+            padding: 10px;
+            text-align: left;
+            }
+    
+            /* Style the table rows */
+            .table-custom td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            }
+    
+            /* Add a hover effect to rows */
+            .table-custom tr:hover {
+            background-color: #f5f5f5;
+            }
+    
+            /* Style the first column differently */
+            /* .table-custom td:first-child {
+            font-weight: bold;
+            } */
+    
+            .imgCenter{
+              text-align: center;
+            }
+    
+            .table-bordered {
+              border: 1px solid rgba(0, 0, 0, 0.125);
+              border-color: #dee2e6;
+            }
+    
+            .table-bordered > thead > tr > th,
+            .table-bordered > tbody > tr > th,
+            .table-bordered > tfoot > tr > th,
+            .table-bordered > thead > tr > td,
+            .table-bordered > tbody > tr > td,
+            .table-bordered > tfoot > tr > td {
+              border: 1px solid rgba(0, 0, 0, 0.125);
+              border-color: inherit;
+              font-size: 14px;
+            }
+    
+        </style>
+       
+    </head>
+    
+    <body>
+    
+        <div class="">
+            <h2 class="pdfTitle">Monthly Attendance of <%= formDoc.length > 0 ? formDoc[0].employeeName : '' %></h2>
+            <div class="container">
+                <table class="table-custom table-bordered">
+                    <thead>
+                      <tr>
+                        <th scope="col">S.no</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Shift</th>
+                        <th scope="col">Shift Timing</th>
+                        <th scope="col">Total TimeWorked</th>
+                        <th scope="col">Late Duration</th>
+                        <th scope="col">Late Reason</th>
+
+                        <th scope="col">Location</th>
+                        <th scope="col">Start Time</th>
+                        <th scope="col">End Time</th>
+                        <th scope="col">Total Time</th>
+                      
+                        </tr>
+                      </thead>
+                    
+                      
+                      <tbody>
+                        <% formDoc && formDoc.forEach((item, index) => { %>
+                            <% if (item.records && item.records.length > 0) { %>
+                                <% item.records.forEach((record, recordIndex) => { %>
+                                    <tr>
+                                        <% if (recordIndex === 0) { %>
+                                            <td rowspan="<%= item.records.length %>"><%= index + 1 %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= item.date %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= item.shift %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= convertTo12HourFormat(item.shiftStartTime) %> - <%= convertTo12HourFormat(item.shiftEndTime) %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= convertMinutesToHMS(item.totalTimeWorked) %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= formatLateTime(item.lateTime) %></td>
+                                            <td rowspan="<%= item.records.length %>"><%= item.lateReason %></td>
+                                        <% } %>
+                                        <td><%= record.location %></td>
+                                        <td><%= record.startTime %></td>
+                                        <td><%= record.endTime %></td>
+                                        <td><%= convertMinutesToHMS(record.totalTime) %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td><%= index + 1 %></td>
+                                    <td><%= item.date %></td>
+                                    <td><%= item.shift %></td>
+                                    <td><%= convertTo12HourFormat(item.shiftStartTime) %> - <%= convertTo12HourFormat(item.shiftEndTime) %></td>
+                                    <td><%= convertMinutesToHMS(item.totalTimeWorked) %></td>
+                                    <td><%= item.lateTime %></td>
+                                    <td><%= item.lateReason %></td>
+                                    <td colspan="4" style="text-align: center;">No Records</td>
+                                </tr>
+                            <% } %>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    
+    </body>
+</html>
+    
