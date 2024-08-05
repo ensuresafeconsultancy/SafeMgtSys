@@ -31,7 +31,7 @@ const Login = () => {
         <div className="container">
             <div className="row pt-4">
                 <div className="col"></div>
-                <div className="col-4">
+                <div className="col-lg-4 col-12">
 
                 <div className="p-4 rounded-3 border border-dark">
 
