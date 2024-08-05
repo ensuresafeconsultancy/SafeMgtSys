@@ -113,6 +113,7 @@ const AddEmployees = () => {
 
     console.log("obj = " , obj)
 
+    // const response = await axios.post("https://safemgtsysbackend.onrender.com/attendance/addShift" , obj)
     const response = await axios.post("http://localhost:3000/attendance/addShift" , obj)
 
     if(response){
