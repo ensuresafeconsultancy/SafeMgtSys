@@ -16,6 +16,8 @@ faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
 
 const { Employee , Shift } = require('../../schema/employeeSchema')
 
+const { deleteAllFiles } = require('../multerFileStorage')
+
 const loadModels = async () => {
     await faceapi.nets.ssdMobilenetv1.loadFromDisk(path.join(__dirname, '../../models'));
     await faceapi.nets.faceLandmark68Net.loadFromDisk(path.join(__dirname, '../../models'));
@@ -134,6 +136,7 @@ router.post("/registerEmployee", upload.single('image'), async (req, res) => {
       console.log("Storing face info in database...");
       await newEmployee.save();
       console.log("Saved successfully");
+      deleteAllFiles('files');
   
       res.status(200).send({ message: 'Face trained successfully', employee: newEmployee });
     } catch (err) {
@@ -147,6 +150,23 @@ router.post("/registerEmployee", upload.single('image'), async (req, res) => {
     const shortTimestamp = timestamp.toString().slice(-5);
     return `EMP-${shortTimestamp}`;
   };
+  
+  router.get('/employeeDescriptor/:employeeId' , async(req, res)=>{
+    try{
+  
+      const { employeeId } = req.params;
+  
+      const response = await Employee.findOne({employeeId : employeeId});
+      if(response){
+        console.log("response userDescriptor = " , response.faceDescriptor)
+        res.send({userDescriptor : response.faceDescriptor})
+      }
+  
+    }catch(err){
+      res.send("sry wronggg")
+    }
+  })
+  
   
   
 // Route to handle image upload and face recognition

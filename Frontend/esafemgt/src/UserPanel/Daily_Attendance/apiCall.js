@@ -172,3 +172,49 @@ export const empCheckOut = async(index)=>{
         console.log(err);
     }
 }
+
+export const fetchEmpFaceDescriptor = async(employeeId)=>{
+    try{
+
+        const token = getEmpJwtToken();
+        if(token){
+            if(checkConnection()){
+                    Swal.fire({
+                        title: 'Loading..',
+                        text: 'Please wait...',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                        Swal.showLoading();
+                        }
+                    });
+        
+                    const response = await axios.get(APIURL + SERVER_VARIABLES.fetchEmpFaceDescriptor + `/${employeeId}` , // No data in the body (optional, adjust if needed)
+                    {
+                    headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
+                    });
+        
+                    Swal.close();
+        
+                    if(response){
+                        return response;
+                    }else{
+                        return false;
+                    }
+
+                }  else {
+                return false;
+            }
+        } else {
+            redirectToLogin();
+        }
+
+    }catch(err){
+        Swal.fire({
+            icon: 'error',
+            title: err.message==="Network Error"? "Server Error" : "Error",
+            text: 'Something went wrong. Please try again later.'
+          });
+        console.log(err);
+    }
+}

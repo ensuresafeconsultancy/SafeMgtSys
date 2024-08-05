@@ -6,13 +6,24 @@ import { submitCheckInTime, checkInList, empCheckOut } from './apiCall';
 import axios from 'axios';
 import Timer from './timer';
 import '../../assets/css/dailyAttendance.css'
+// import Swal from 'sweetalert2';
+import FaceDetectIcon from '../../assets/images/faceDetect.png'
+import FaceRecognition from './FaceRecognition';
+import * as faceapi from 'face-api.js';
+
+// import { ModelsContext } from '../../contexts/ModelsContext';
+
 const Attendance = () => {
-    const [currentTime, setCurrentTime] = useState(new Date());
-    const [location, setLocation] = useState('');
-    const [geoPhotos, setGeoPhotos] = useState([]);
-    const [lateReason, setLateReason] = useState('');
-    // const [currentViewNotes, setCurrentViewNotes] = useState('');
-    const [empCheckInList, setEmpCheckIn] = useState({});
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [location, setLocation] = useState('');
+  // const [geoPhotos, setGeoPhotos] = useState([]);
+  const [lateReason, setLateReason] = useState('');
+  // const [currentViewNotes, setCurrentViewNotes] = useState('');
+  const [empCheckInList, setEmpCheckIn] = useState({});
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [faceRecognized , setFaceRecognized] = useState(false);
+
+  // const { modelsLoaded } = useContext(ModelsContext);
 
     const fetchCheckInList = async () => {
       // const response = await checkInList("669b70de7f081744a4a62128");
@@ -22,6 +33,8 @@ const Attendance = () => {
           console.log("response.data.currentCheckIn = ", response.data.empCheckInList.currentCheckIn);
         }
         setEmpCheckIn(()=>response.data.empCheckInList);
+    console.log("EmpCheckInList = ", empCheckInList);
+        
       }
     };
 
@@ -29,23 +42,71 @@ const Attendance = () => {
       fetchCheckInList();
     }, []);
 
+    // useEffect(() => {
+
+      const loadDummImage = async()=>{
+
+        const dummyImg = new Image();
+        dummyImg.src = FaceDetectIcon;
+        dummyImg.onload = async () => {
+          console.log("Warming up models with dummy image...");
+          await faceapi.detectAllFaces(dummyImg, new faceapi.SsdMobilenetv1Options());
+          setModelsLoaded(true);
+          console.log("Models loaded and warmed up.");
+        };
+
+        dummyImg.onerror = () => {
+          console.error("Failed to load dummy image for model warm-up.");
+          setModelsLoaded(true); // Consider setting to true even if the warm-up fails
+        };
+
+      }
+    
+      const loadModels = async () => {
+        if (!modelsLoaded) {
+          try {
+            const modelPromises = [
+              faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+              faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+              faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+            ];
+      
+            await Promise.all(modelPromises);
+      
+            console.log("models loaded")
+            
+            await loadDummImage();
+            // setModelsLoaded(true);
+            
+            
+          } catch (error) {
+            console.error("Error loading models:", error);
+          }
+        }
+      };
+      
+
+  
+
     const fileInputRef = useRef(null);
 
     const submitCheckin = async (event) => {
       event.preventDefault();
       console.log("location = ", location);
-      console.log("geoPhotos = ", geoPhotos);
-      const response = await submitCheckInTime(location, lateReason, geoPhotos , empCheckInList._id);
+      // console.log("geoPhotos = ", geoPhotos);
+      const response = await submitCheckInTime(location, lateReason, empCheckInList._id);
+      // const response = await submitCheckInTime(location, lateReason, geoPhotos , empCheckInList._id);
 
       if(response){
+        document.getElementById("closeModalButton").click();
         setEmpCheckIn(()=>response.data.updatedEmployee);
         setLocation(()=>'')
-        setGeoPhotos(()=>[])
+        // setGeoPhotos(()=>[])
+        setFaceRecognized(false);
         if(lateReason){
           setLateReason(()=>'')
         }
         fileInputRef.current.value = null; // Reset the file input field
-      document.getElementById("closeModalButton").click();
       }
     };
 
@@ -71,7 +132,7 @@ const Attendance = () => {
 
     
 
-    console.log("EmpCheckInList = ", empCheckInList);
+    // console.log("EmpCheckInList = ", empCheckInList);
 
     const fetchCurrentWorkLocation = () => {
       console.log("Fetching current working location...");
@@ -241,18 +302,44 @@ const Attendance = () => {
                   </label>
                   <input type="text" className="form-control" value={currentTime.toLocaleTimeString()} disabled/>
                 </div>
-                <div className="form-group py-2">
+
+                {modelsLoaded? <>
+
+                  <div className="form-group py-2">
                   <label htmlFor="" className="form-label">
                     Work Location :
                   </label>
                   <input type="text" value={location} onChange={(e)=>handleInput(e)} id="location" className="form-control" required />
                 </div>
-                <div className="form-group py-2">
+                <div className="form-group d-flex justify-content-center align-items-center flex-column gap-2 py-3">
+                  {/* <img src={FaceDetectIcon} style={{width:'100px'}} className='faceScanImg p-2 rounded-3 cursor_pointer' alt="" /> */}
+                  {/* <span>Face scan</span> */}
+                  {/* {modelsLoaded? <FaceRecognition setFaceRecognized={setFaceRecognized} employeeId = {empCheckInList.employeeId} /> : "Loading Face scan ..."} */}
+                  <FaceRecognition modelsLoaded={modelsLoaded} setModelsLoaded={setModelsLoaded} setFaceRecognized={setFaceRecognized} faceapi={faceapi} employeeId = {empCheckInList.employeeId} />
+                  {/* {empCheckInList.employeeId && <FaceRecognition employeeId = {empCheckInList.employeeId} />} */}
+                  
+                </div>
+                
+                
+                </>
+
+                :
+
+                <div className="d-flex justify-content-center align-items-center py-4">
+
+                  Loading Face scan ...
+                </div>
+
+                
+              }
+                
+
+                {/* <div className="form-group py-2">
                   <label htmlFor="" className="form-label">
                     Upload Geo tag photo:
                   </label>
                   <input type="file" className="form-control"  ref={fileInputRef} onChange={(e)=>handleFileChange(e)}  multiple required />
-                </div>
+                </div> */}
 
                 {checkForLate()?
                 
@@ -280,7 +367,7 @@ const Attendance = () => {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" disabled={!faceRecognized}>
                 Check In
               </button>
             </div>
@@ -316,7 +403,7 @@ const Attendance = () => {
 
       <div className="row pt-5">
         <div className="col"></div>
-        <div className="col-8">
+        <div className="col-lg-8 col-10">
             <div className="row">
                 <div className="col">
                 <div className="text-center p-3 border rounded-4 bg-light">
@@ -343,7 +430,7 @@ const Attendance = () => {
                   :
 
                   <div className='d-flex justify-content-center align-items-center gap-2'>
-                    <div  data-bs-toggle="modal" onClick={()=>updateCurrentTime()} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
+                    <div  data-bs-toggle="modal" onClick={()=>{loadModels(); updateCurrentTime()  }} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
                     <AiOutlineCarryOut className='fs-3' />
                       Check In
                     </div>
@@ -411,8 +498,8 @@ const Attendance = () => {
 {empCheckInList && empCheckInList.records && empCheckInList.records.length>0? 
       <div className="row pt-5">
         <div className="col"></div>
-        <div className="col-10">
-          <div className="">
+        <div className="col-lg-10 col-12">
+          <div className="" style={{overflowX: 'auto'}}>
             <table className="table table-hover">
               <thead>
                 <tr>

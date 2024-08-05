@@ -3,7 +3,7 @@ import { APIURL } from '../APIURL/apiUrl';
 import { SERVER_VARIABLES } from '../ServerVariables/serverVariables';
 import { checkConnection } from '../Utils/common';
 
-import { showLoadingAlert , closeAlert , showAlert } from '../Utils/sweetAlertFunctions';
+import { showLoadingAlert , closeAlert , showAlert , showSuccessAlert } from '../Utils/sweetAlertFunctions';
 
 function getAdminJwtToken() {
     const isAuth = localStorage.getItem('isAuth');
@@ -222,16 +222,18 @@ export const registerEmployee = async(newFormData)=>{
                     closeAlert();
 
                     if (response) {
-                        showAlert('success' , 'sucess');
-                      console.log(response);
-                      console.log("File uploaded successfully");
+                        showSuccessAlert();
+                        console.log(response);
+                        console.log("File uploaded successfully");
+                        return true;
                     } else {
                         showAlert('error', 'Error!', response.data);
+                        return false;
                     }
                   } catch (error) {
                     showAlert('error', 'Error uploading image', error.response.data);
-
                     console.error('Error uploading image:', error);
+                    return false;
                   }
 
             } else {

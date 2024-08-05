@@ -45,21 +45,21 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json()); // Parse incoming JSON data
 
 // MongoDB connection with error handling
-mongoose.connect('mongodb://127.0.0.1:27017/DailyAttendance')
-  .then(() => console.log('Connected to MongoDB')) 
-  .catch(err => console.error('MongoDB connection error:'));
+// mongoose.connect('mongodb://127.0.0.1:27017/DailyAttendance')
+//   .then(() => console.log('Connected to MongoDB')) 
+//   .catch(err => console.error('MongoDB connection error:'));
 
 
-// try{
-//   mongoose.connect(process.env.MONGO_URL)
-//   .then(() => console.log('Connected!'))
-//   .catch((err)=>{
-//     console.log("Database not connected")
-//   })
+try{
+  mongoose.connect(process.env.MONGO_URL)
+  .then(() => console.log('Connected!'))
+  .catch((err)=>{
+    console.log("Database not connected")
+  })
 
-// }catch(err){
-//   console.log("Db not connected")
-// }
+}catch(err){
+  console.log("Db not connected")
+}
   
 
 // Mount attendance routes

@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { registerEmployee , fetchShiftDetails } from '../apiCall';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 
 const AddEmployees = () => {
@@ -11,6 +12,8 @@ const AddEmployees = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const webcamRef = useRef(null);
   const canvasRef = useRef();
+  const navigate = useNavigate();
+
   // const [employeeName, setEmployeeName] = useState('');
   const [employeeDetails, setEmployeeDetails] = useState({
     empName: '',
@@ -68,7 +71,10 @@ const AddEmployees = () => {
     newFormData.append('employeePassword', employeeDetails.empPassword);
     newFormData.append('shift', employeeDetails.shift);
 
-    await registerEmployee(newFormData);
+    const response = await registerEmployee(newFormData);
+    if(response){
+      navigate('/AdminPanel/employees');
+    }
 
   
   };
@@ -173,15 +179,17 @@ const AddEmployees = () => {
                     </div>
                   )}
                   {image && (
-                    <div>
-                      <h2>Captured Image</h2>
+                    <div className='d-flex justify-content-center align-items-center flex-column gap-2'>
+                      {/* <h2>Captured Image</h2> */}
                       <img src={image} alt="Captured" />
                       <button className='btn btn-primary' type='button' onClick={retakeImage} style={{ display: 'block', marginTop: '10px' }}>Retake</button>
                     </div>
                   )}
                 </div>
                 <canvas ref={canvasRef} className='img-fluid' style={{ display: 'none' }}></canvas>
-                <button className='btn btn-success ms-3'>Register</button>
+                <div className="text-center">
+                  <button className='btn btn-success mt-4 px-4'>Register</button>
+                </div>
               </div>
             </form>
 
