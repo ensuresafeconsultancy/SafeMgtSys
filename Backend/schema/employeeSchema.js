@@ -33,7 +33,7 @@ const recordSchema = new mongoose.Schema({
 // },
   
 const employeeAttendanceSchema = new mongoose.Schema({
-    employeeId : { type: String, required: true, unique: true },
+    employeeId : { type: String, required: true},
     employeeName: { type: String, required: true },
     date: String, // Consider using Date type for better querying
     currentCheckIn : Boolean,

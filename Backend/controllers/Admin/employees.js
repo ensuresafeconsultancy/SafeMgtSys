@@ -104,7 +104,7 @@ router.post("/registerEmployee", upload.single('image'), async (req, res) => {
       }
   
       // Generate a unique employee ID (you can customize this as needed)
-      const employeeId = generateEmployeeId();
+      const employeeId = generateUniqueEmployeeId();
 
       const saltRounds = 10; 
       const hashedPassword = await bcrypt.hash(employeePassword , saltRounds);
@@ -145,11 +145,34 @@ router.post("/registerEmployee", upload.single('image'), async (req, res) => {
     }
   });
 
-  const generateEmployeeId = () => {
-    const timestamp = Date.now();
-    const shortTimestamp = timestamp.toString().slice(-5);
-    return `EMP-${shortTimestamp}`;
+  // const generateEmployeeId = () => {
+  //   const timestamp = Date.now();
+  //   const shortTimestamp = timestamp.toString().slice(-5);
+  //   return `EMP-${shortTimestamp}`;
+  // };
+
+  const generateUniqueEmployeeId = async () => {
+    let unique = false;
+    let employeeId = '';
+  
+    while (!unique) {
+      const randomId = generateRandomFiveDigitNumber();
+      employeeId = `EMP-${randomId}`;
+      
+      // Check if the generated ID is already in use
+      const existingEmployee = await Employee.findOne({ employeeId: employeeId });
+      if (!existingEmployee) {
+        unique = true;
+      }
+    }
+  
+    return employeeId;
   };
+
+  const generateRandomFiveDigitNumber = () => {
+    return Math.floor(10000 + Math.random() * 90000);
+  };
+  
   
   router.get('/employeeDescriptor/:employeeId' , async(req, res)=>{
     try{

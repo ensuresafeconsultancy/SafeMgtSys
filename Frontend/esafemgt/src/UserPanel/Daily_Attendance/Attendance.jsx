@@ -76,7 +76,7 @@ const Attendance = () => {
             console.log("models loaded")
             
             loadDummImage();
-            setModelsLoaded(true);
+            // setModelsLoaded(true);
             
             
           } catch (error) {

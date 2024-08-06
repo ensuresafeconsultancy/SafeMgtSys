@@ -75,7 +75,7 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
         // User not found, create a new user with the first record
         const userData = {
           employeeId: employeeId,
-          employeeName,
+          employeeName : employeeName,
           date: currentDate,
           currentCheckIn: false,
           shift: shiftData.shiftName,
@@ -84,16 +84,23 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
           records : [],
         };
 
-        const newUser = new EmployeeAttendance(userData);
-        const response = await newUser.save();
-        console.log("Userdata " , response);
-        res.send({  status : 1 , message: "success" , empCheckInList : response });
+        console.log("userData = " , userData)
+
+        const newuser = new EmployeeAttendance(userData);
+        console.log("trying to save..")
+        console.log("newUser = " , newuser)
+        try {
+          const response = await newuser.save();
+          console.log("saved successfuly");
+          console.log("Userdata ", response);
+          res.send({ status: 1, message: "success", empCheckInList: response });
+        } catch (saveErr) {
+          console.error("Error saving new user: ", saveErr);
+          res.status(500).send({ status: 0, message: "Error saving new user", error: saveErr });
+        }
         return; // Exit if user is created
 
       }
-
-
-
       res.send({status : 1 , empCheckInList : empCheckInList})
 
     }catch(err){
