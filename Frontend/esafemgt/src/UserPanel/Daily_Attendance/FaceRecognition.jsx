@@ -45,12 +45,12 @@ const FaceRecognition = ({ employeeId, setFaceRecognized , modelsLoaded , faceap
         console.log("Detecting face...");
 
         try {
-          const startTime = performance.now();
+          // const startTime = performance.now();
 
           const detections = await faceapi.detectAllFaces(videoRef.current.video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceDescriptors();
 
-          const endTime = performance.now();
-          console.log(`Face detection took ${endTime - startTime} milliseconds`);
+          // const endTime = performance.now();
+          // console.log(`Face detection took ${endTime - startTime} milliseconds`);
   
           if (!detections || detections.length === 0) {
             return;

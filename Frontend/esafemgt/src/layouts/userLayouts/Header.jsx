@@ -48,6 +48,7 @@ export default function Header() {
           if (result.isConfirmed) {
             localStorage.setItem('isAuth', '');
             localStorage.setItem('employeeToken', '');
+            localStorage.setItem('adminToken', '');
             // logout(); // Call the logout function from the context
             window.location.href = '/';
           }
