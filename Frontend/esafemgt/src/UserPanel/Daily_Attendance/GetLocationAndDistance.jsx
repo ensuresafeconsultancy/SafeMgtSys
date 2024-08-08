@@ -7,6 +7,65 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
     const [error, setError] = useState(null);
     
 
+    // const getLocation = () => {
+    //   if (navigator.geolocation) {
+    //     navigator.geolocation.getCurrentPosition(
+    //       (position) => {
+    //         const { latitude: currentLat, longitude: currentLon } = position.coords;
+    //         seInitialLoc({ lat: currentLat, lon: currentLon });
+    //         console.log(`Current Location: ${currentLat}, ${currentLon}`);
+    //         if (currentLat && currentLon) {
+    //           fetchAddress(currentLat, currentLon)
+    //             .then((address) => setAddress(address))
+    //             .catch((error) => console.error('Error fetching address:', error));
+
+    //           const homeLat = import.meta.env.VITE_COMPANY_LAT;
+    //           const homeLong = import.meta.env.VITE_COMPANY_LONG;
+
+    //           console.log("Company lat long = ", homeLat, homeLong);
+
+    //           if (homeLat && homeLong) {
+    //             const distance = calculateDistance(parseFloat(homeLat), parseFloat(homeLong), currentLat, currentLon);
+    //             const distance_radius = parseFloat(import.meta.env.VITE_COMPANY_RADIUS);
+    //             console.log("distance_radius = ", distance_radius);
+            
+
+    //             setDistance(distance.toFixed(2));
+             
+
+    //             if (distance > distance_radius) {
+    //               setDistanceError(`Your distance should be less than ${distance_radius} meters. Go inside the office campus to check in.`);
+    //             } else {
+    //               setDistanceError('');
+    //             }
+
+    //             console.log("locationLoaded  = ", locationLoaded);
+    //             setLocationLoaded(true);
+    //             setError('');
+           
+    //           } else {
+    //             console.error('Error getting company latitude or longitude');
+    //           }
+    //         } else {
+    //           console.error('Error getting current latitude or longitude');
+    //         }
+    //       },
+    //       (error) => {
+    //         console.error('Error getting initial location:', error);
+    //         setError('Turn on your location, Please go outdoor.');
+    //       },
+    //       {
+    //         enableHighAccuracy: true,
+    //         timeout: 10000,
+    //         maximumAge: 0
+    //       }
+    //     );
+    //   } else {
+    //     setError('Geolocation is not supported by this browser.');
+    //   }
+    // };
+
+
     const getLocation = () => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
@@ -27,19 +86,20 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
               console.log(homeLat, homeLong, currentLat, currentLon);
               const distance = calculateDistance(parseFloat(homeLat) , parseFloat(homeLong) ,  currentLat , currentLon );
 
-              const distance_radius = import.meta.env.VITE_COMPANY_RADIUS;
-              if(distance.toFixed(2) > distance_radius){
-                setDistanceError(`Your distance should be less than ${distance_radius}meters , Go inside the office campus to check in`);
+              const distance_radius = parseFloat(import.meta.env.VITE_COMPANY_RADIUS);
+              console.log("distance_radius = ", distance_radius);
+
+              if (distance > distance_radius) {
+                setDistanceError(`Your distance should be less than ${distance_radius} meters. Go inside the office campus to check in.`);
               } else {
                 setDistanceError('');
               }
+
               setDistance(distance.toFixed(2));
               console.log("locationLoaded  = ", locationLoaded)
               setLocationLoaded(true);
               setError('');
-              // setLocationEnabled(true); 
 
-              // getGoogleLocation();
             },
             (error) => {
               console.error('Error getting initial location:', error);
@@ -81,17 +141,45 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
       const fetchAddress = async (lat, lng) => {
         console.log("Fetching address")
         const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`);
-        const data = await response.json();
-  
-        if (data.status === 'OK' && data.results.length > 0) {
-          const relevantResult = data.results.find(result => result.types.includes("street_address")) || data.results[0];
-          console.log("Address = ", relevantResult.formatted_address)
-          setAddress(relevantResult.formatted_address);
-        } else {
+        if (!apiKey) {
+          console.error('API key is not set');
+          return;
+        }
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch address: ${response.status} ${response.statusText}`);
+          }
+          const data = await response.json();
+          if (data.status === 'OK' && data.results.length > 0) {
+            const relevantResult = data.results.find(result => result.types.includes("street_address")) || data.results[0];
+            console.log("Address = ", relevantResult.formatted_address)
+            setAddress(relevantResult.formatted_address);
+          } else {
+            setError('Unable to retrieve address');
+          }
+        } catch (error) {
+          console.error('Error fetching address:', error);
           setError('Unable to retrieve address');
         }
       };
+  
+  
+      // const fetchAddress = async (lat, lng) => {
+      //   console.log("Fetching address")
+      //   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+      //   const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`);
+      //   const data = await response.json();
+  
+      //   if (data.status === 'OK' && data.results.length > 0) {
+      //     const relevantResult = data.results.find(result => result.types.includes("street_address")) || data.results[0];
+      //     console.log("Address = ", relevantResult.formatted_address)
+      //     setAddress(relevantResult.formatted_address);
+      //   } else {
+      //     setError('Unable to retrieve address');
+      //   }
+      // };
   
   
     

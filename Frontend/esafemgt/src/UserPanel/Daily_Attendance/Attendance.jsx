@@ -11,6 +11,7 @@ import FaceDetectIcon from '../../assets/images/faceDetect.png'
 import FaceRecognition from './FaceRecognition';
 import * as faceapi from 'face-api.js';
 import GetLocationDistance from './GetLocationAndDistance';
+import Dummy_man_image from '../../assets/images/man_image_compressed.png'
 // import { ModelsContext } from '../../contexts/ModelsContext';
 
 const Attendance = () => {
@@ -52,10 +53,10 @@ const Attendance = () => {
       const loadDummImage = async()=>{
 
         const dummyImg = new Image();
-        dummyImg.src = FaceDetectIcon;
+        dummyImg.src = Dummy_man_image;
         dummyImg.onload = async () => {
           console.log("Warming up models with dummy image...");
-          await faceapi.detectAllFaces(dummyImg, new faceapi.SsdMobilenetv1Options());
+          await faceapi.detectAllFaces(dummyImg, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks();
           setModelsLoaded(true);
           console.log("Models loaded and warmed up.");
         };
@@ -379,9 +380,13 @@ const Attendance = () => {
               >
                 Cancel
               </button>
+<<<<<<< HEAD
 
                 {faceRecognized? !distanceError? 
                 <button type="submit" className="btn btn-primary" >
+=======
+              <button type="submit" className="btn btn-primary" disabled={!faceRecognized && distanceError? true : false}>
+>>>>>>> 316e707e339829fdd5f3a4ffaca513d38fd269f5
                 Check In
               </button>
               :
