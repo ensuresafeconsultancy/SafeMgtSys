@@ -110,14 +110,35 @@ const FaceRecognition = ({ employeeId, setFaceRecognized , modelsLoaded , faceap
         }
         setIsCameraOn(false); // Turn off the camera
 
+        // Swal.fire({
+        //   icon: 'error',
+        //   title: 'Error!',
+        //   text: "Face not recognized within the time limit, go to proper lighting place",
+        //   showConfirmButton: true,
+        //   confirmButtonText: 'OK'
+        // });
         Swal.fire({
           icon: 'error',
           title: 'Error!',
           text: "Face not recognized within the time limit, go to proper lighting place",
-          showConfirmButton: true,
-          confirmButtonText: 'OK'
+          showCancelButton: true,
+          confirmButtonText: 'OK',
+          cancelButtonText: 'Try Again',
+          cancelButtonColor: '#28a745'
+        }).then((result) => {
+          if (result.isDismissed) {
+            // Code to execute when "Try Again" is clicked
+            console.log('Try Again clicked');
+            handleOpenCamera();
+            // Add your code here
+          } else if (result.isConfirmed) {
+            // Code to execute when "OK" is clicked
+            console.log('OK clicked');
+            // Add your code here if needed
+          }
         });
-      }, 15000); // 15 seconds timer
+        
+      }, 8000); // 8 seconds timer
 
       return () => {
         clearInterval(intervalId);

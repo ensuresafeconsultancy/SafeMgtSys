@@ -10,7 +10,7 @@ import '../../assets/css/dailyAttendance.css'
 import FaceDetectIcon from '../../assets/images/faceDetect.png'
 import FaceRecognition from './FaceRecognition';
 import * as faceapi from 'face-api.js';
-
+import GetLocationDistance from './GetLocationAndDistance';
 // import { ModelsContext } from '../../contexts/ModelsContext';
 
 const Attendance = () => {
@@ -22,7 +22,12 @@ const Attendance = () => {
   const [empCheckInList, setEmpCheckIn] = useState({});
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceRecognized , setFaceRecognized] = useState(false);
+  const [locationLoaded , setLocationLoaded] = useState(false);
 
+  const [address, setAddress] = useState('');
+  
+    const [distance , setDistance] = useState('');
+    const [distanceError , setDistanceError] = useState('');
   // const { modelsLoaded } = useContext(ModelsContext);
 
     const fetchCheckInList = async () => {
@@ -84,8 +89,6 @@ const Attendance = () => {
           }
         }
       };
-      
-
   
 
     const fileInputRef = useRef(null);
@@ -93,6 +96,13 @@ const Attendance = () => {
     const submitCheckin = async (event) => {
       event.preventDefault();
       console.log("location = ", location);
+      if(distance > 100){
+        // setDistanceError("Please move closer to the location");
+        return;
+        // alert("Please move closer to the location");
+      } else{
+        setDistanceError('');
+      }
       // console.log("geoPhotos = ", geoPhotos);
       const response = await submitCheckInTime(location, lateReason, empCheckInList._id);
       // const response = await submitCheckInTime(location, lateReason, geoPhotos , empCheckInList._id);
@@ -317,7 +327,11 @@ const Attendance = () => {
                   {/* {modelsLoaded? <FaceRecognition setFaceRecognized={setFaceRecognized} employeeId = {empCheckInList.employeeId} /> : "Loading Face scan ..."} */}
                   <FaceRecognition modelsLoaded={modelsLoaded} setModelsLoaded={setModelsLoaded} setFaceRecognized={setFaceRecognized} faceapi={faceapi} employeeId = {empCheckInList.employeeId} />
                   {/* {empCheckInList.employeeId && <FaceRecognition employeeId = {empCheckInList.employeeId} />} */}
-                  
+                </div>
+
+                <div className="d-flex justify-content-center align-items-center">
+                  <GetLocationDistance locationLoaded={locationLoaded} setLocationLoaded={setLocationLoaded} distance={distance} setDistance={setDistance} setAddress={setAddress} address={address} distanceError={distanceError} setDistanceError={setDistanceError} />
+
                 </div>
                 
                 
@@ -326,12 +340,11 @@ const Attendance = () => {
                 :
 
                 <div className="d-flex justify-content-center align-items-center py-4">
-
                   Loading Face scan ...
                 </div>
-
-                
               }
+
+
                 
 
                 {/* <div className="form-group py-2">
@@ -430,7 +443,7 @@ const Attendance = () => {
                   :
 
                   <div className='d-flex justify-content-center align-items-center gap-2'>
-                    <div  data-bs-toggle="modal" onClick={()=>{loadModels(); updateCurrentTime()  }} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
+                    <div  data-bs-toggle="modal" onClick={()=>{loadModels(); updateCurrentTime(); setLocationLoaded(false);  }} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
                     <AiOutlineCarryOut className='fs-3' />
                       Check In
                     </div>
@@ -663,5 +676,7 @@ const Attendance = () => {
     </div>
   );
 };
+
+
 
 export default Attendance;

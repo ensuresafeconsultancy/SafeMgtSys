@@ -265,7 +265,8 @@ router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) =>
       }
 
       if(user.currentCheckIn === true){
-        res.status(500).send("Internal server error");
+        deleteAllFiles('files'); 
+        return res.status(500).send("Internal server error");
       }
 
 
