@@ -27,14 +27,16 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
               console.log(homeLat, homeLong, currentLat, currentLon);
               const distance = calculateDistance(parseFloat(homeLat) , parseFloat(homeLong) ,  currentLat , currentLon );
 
-              if(distance.toFixed(2) > 100){
-                setDistanceError('Go inside the office campus to check in');
+              const distance_radius = import.meta.env.VITE_COMPANY_RADIUS;
+              if(distance.toFixed(2) > distance_radius){
+                setDistanceError(`Your distance should be less than ${distance_radius}meters , Go inside the office campus to check in`);
               } else {
                 setDistanceError('');
               }
               setDistance(distance.toFixed(2));
               console.log("locationLoaded  = ", locationLoaded)
               setLocationLoaded(true);
+              setError('');
               // setLocationEnabled(true); 
 
               // getGoogleLocation();

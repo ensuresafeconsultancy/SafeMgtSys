@@ -380,7 +380,7 @@ const Attendance = () => {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary" disabled={!faceRecognized}>
+              <button type="submit" className="btn btn-primary" disabled={!faceRecognized && !distanceError}>
                 Check In
               </button>
             </div>
