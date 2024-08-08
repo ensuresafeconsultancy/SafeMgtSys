@@ -370,7 +370,6 @@ const Attendance = () => {
                 
                 }
                
-            
             </div>
             <div className="modal-footer">
               <button
