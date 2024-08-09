@@ -192,7 +192,7 @@ const FaceRecognition = ({ employeeId, setFaceRecognized , modelsLoaded , faceap
                 facingMode: "user"
               }}
               className="videoCanva"
-              style={{ marginRight: '20px' }}
+             
             />
           </div>
         )}
