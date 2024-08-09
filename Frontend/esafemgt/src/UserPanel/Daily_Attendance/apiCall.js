@@ -153,12 +153,12 @@ export const empCheckOut = async(index , address , distance)=>{
         if(token){
             if(checkConnection()){
 
-                console.log(" address , distance = " ,  address , distance)
+                    console.log(" address , distance = " ,  address , distance)
 
-                let newFormData = {
-                    address : address,
-                    distance : distance
-                }
+                    let newFormData = {
+                        address : address,
+                        distance : distance
+                    }
 
                     Swal.fire({
                         title: 'check-out',

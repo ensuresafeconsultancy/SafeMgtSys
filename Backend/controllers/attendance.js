@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express')
 const router = express.Router();
+const moment = require('moment-timezone');
 
 const authMiddleware = require('../Authentication/authMiddleware')
 
@@ -16,7 +17,7 @@ const { getCurrentDateTime } = require('./CurrentDateTime')
 
 
 // router.get("/checkInList/:employeeId" ,async(req, res)=>{
-  router.get("/checkInList", authMiddleware ,async(req, res)=>{
+router.get("/checkInList", authMiddleware ,async(req, res)=>{
     try{
 
       // const { employeeId } = req.params;
@@ -86,7 +87,6 @@ const { getCurrentDateTime } = require('./CurrentDateTime')
         res.send("some problem")
     }
 })
-
 
 
 router.post("/empCheckOut/:index", async (req, res) => {
