@@ -10,13 +10,16 @@ const path = require('path')
 
 const { EmployeeAttendance } = require('../../schema/employeeSchema')
 
+const { getCurrentDateTime } = require('../CurrentDateTime')
+
 
 router.get('/fetchEmployeeAttendance' , async(req , res)=>{
     try{
 
-        const todayDate = new Date();
+        const { currentDate } = getCurrentDateTime();
+
         const attendanceList = await EmployeeAttendance.find({
-            date: todayDate.toLocaleDateString()
+            date: currentDate
         });
                
         console.log("attendanceList = " , attendanceList) 
@@ -35,15 +38,15 @@ router.get('/fetchEmployeeAttendance' , async(req , res)=>{
 router.post('/fetchEmployeeAttendanceRecords' , async(req, res)=>{
     try{
 
-        const todayDate = new Date();
+        const { currentDate } = getCurrentDateTime();
         const { employeeId } = req.user;
 
         const attendanceRecord = await EmployeeAttendance.findOne({
             employeeId:employeeId,
-            date: todayDate.toLocaleDateString()
+            date: currentDate
           });
 
-        console.log(employeeId , todayDate.toLocaleDateString())
+        console.log(employeeId , currentDate)
 
         if (!attendanceRecord) {
             return res.status(404).json({status : 0 , message: 'No attendance record found' });

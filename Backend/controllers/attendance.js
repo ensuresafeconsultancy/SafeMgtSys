@@ -4,24 +4,14 @@ const router = express.Router();
 
 const authMiddleware = require('../Authentication/authMiddleware')
 
-// const fs = require('fs')
-// const path = require('path')
+const fs = require('fs')
+const path = require('path')
 const bcrypt = require('bcrypt');
 
 const { Employee , EmployeeAttendance , Shift } = require('../schema/employeeSchema')
 // const shiftSchema = require('../schema/shiftSchema')
 
-
-const moment = require('moment-timezone');
-
-const getCurrentDateTime = () => {
-    const timeZone = process.env.TIMEZONE || 'UTC'; // Default to UTC if TIMEZONE is not set
-    const dateAndTime = moment().tz(timeZone);
-    const currentDate = dateAndTime.format('DD/MM/YYYY');
-    const currentTime = dateAndTime.format('hh:mm:ss a');
-    return { currentDate, currentTime };
-};
-
+const { getCurrentDateTime } = require('./CurrentDateTime')
 
 
 
