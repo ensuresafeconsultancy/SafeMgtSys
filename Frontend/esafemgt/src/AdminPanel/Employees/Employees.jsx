@@ -2,9 +2,12 @@ import { useState , useEffect } from 'react'
 import { fetchEmpAcc } from '../apiCall';
 import { IoPersonAdd } from "react-icons/io5";
 import { Link } from 'react-router-dom';
+import { convertTo12HourFormat } from '../../Utils/attendanceCommonFun';
+
 const Employees = () => {
 
     const [employeeAccounts , setEmployeeAccounts] = useState([]);
+    const [shiftData , setShiftData] = useState([]);
 
     useEffect(()=>{
         fetchEmployeeAccounts();
@@ -13,10 +16,26 @@ const Employees = () => {
     const fetchEmployeeAccounts = async()=>{
         const response = await fetchEmpAcc();
         if(response){
-            setEmployeeAccounts(response.data.EmployeeAccounts)
+            setEmployeeAccounts(response.data.EmployeeAccounts);
+            setShiftData(response.data.shiftData);
         }
     }
 
+    const getShiftName = (shiftId) => {
+        const shift = shiftData.find(shift => shift._id === shiftId);
+        return shift ? shift.shiftName : 'N/A';
+    }
+
+    const getShiftTiming = (shiftId) => {
+        const shift = shiftData.find(shift => shift._id === shiftId);
+        if (shift) {
+            const startTime12Hr = convertTo12HourFormat(shift.startTime);
+            const endTime12Hr = convertTo12HourFormat(shift.endTime);
+            return `${startTime12Hr} - ${endTime12Hr}`;
+        }
+        return 'N/A';
+    }
+    
   return (
     <div className='p-2'>
         <div className="row p-2">
@@ -44,6 +63,7 @@ const Employees = () => {
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Shift</th>
+                                <th>Shift Timing</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -55,7 +75,8 @@ const Employees = () => {
                                     <td>{item.employeeId}</td>
                                     <td>{item.employeeName}</td>
                                     <td>{item.employeeEmail}</td>
-                                    <td>{item.shift}</td>
+                                    <td>{getShiftName(item.shift)}</td>
+                                    <td>{getShiftTiming(item.shift)}</td>
                                     <td>Actions</td>
                                 </tr>
                             ))}

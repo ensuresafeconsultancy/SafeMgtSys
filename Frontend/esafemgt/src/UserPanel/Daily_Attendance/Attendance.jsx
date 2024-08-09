@@ -17,30 +17,32 @@ import Dummy_man_image from '../../assets/images/man_image_compressed.png'
 const Attendance = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location, setLocation] = useState('');
-  // const [geoPhotos, setGeoPhotos] = useState([]);
+
   const [lateReason, setLateReason] = useState('');
-  // const [currentViewNotes, setCurrentViewNotes] = useState('');
+
   const [empCheckInList, setEmpCheckIn] = useState({});
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceRecognized , setFaceRecognized] = useState(false);
   const [locationLoaded , setLocationLoaded] = useState(false);
 
   const [address, setAddress] = useState('');
-  
-    const [distance , setDistance] = useState('');
-    const [distanceError , setDistanceError] = useState('');
+  const [distance , setDistance] = useState('');
+  const [distanceError , setDistanceError] = useState('');
   // const { modelsLoaded } = useContext(ModelsContext);
 
     const fetchCheckInList = async () => {
-      // const response = await checkInList("669b70de7f081744a4a62128");
-      const response = await checkInList();
-      if (response && response.data.status === 1) {
-        if(response.data.empCheckInList && response.data.empCheckInList.currentCheckIn){
-          console.log("response.data.currentCheckIn = ", response.data.empCheckInList.currentCheckIn);
+      try {
+        const response = await checkInList();
+    
+        if (response && response.data.status === 1) {
+          if (response.data.empCheckInList && response.data.empCheckInList.currentCheckIn) {
+            console.log("Current Check-In: ", response.data.empCheckInList.currentCheckIn);
+          }
+          setEmpCheckIn(response.data.empCheckInList);
+          console.log("Employee Check-In List: ", response.data.empCheckInList);
         }
-        setEmpCheckIn(()=>response.data.empCheckInList);
-    console.log("EmpCheckInList = ", empCheckInList);
-        
+      } catch (err) {
+        console.error("Error fetching check-in list:", err.message);
       }
     };
 
@@ -97,15 +99,10 @@ const Attendance = () => {
     const submitCheckin = async (event) => {
       event.preventDefault();
       console.log("location = ", location);
-      if(distance > 100){
-        // setDistanceError("Please move closer to the location");
-        return;
-        // alert("Please move closer to the location");
-      } else{
-        setDistanceError('');
-      }
-      // console.log("geoPhotos = ", geoPhotos);
-      const response = await submitCheckInTime(location, lateReason, empCheckInList._id);
+
+    
+
+      const response = await submitCheckInTime(location, lateReason, address , distance);
       // const response = await submitCheckInTime(location, lateReason, geoPhotos , empCheckInList._id);
 
       if(response){
@@ -114,6 +111,10 @@ const Attendance = () => {
         setLocation(()=>'')
         // setGeoPhotos(()=>[])
         setFaceRecognized(false);
+        setAddress('');
+        setDistance('');
+        setDistanceError('');
+
         if(lateReason){
           setLateReason(()=>'')
         }
@@ -136,10 +137,6 @@ const Attendance = () => {
       }
     };
 
-    const handleFileChange = (event) => {
-      const selectedFiles = event.target.files;
-      setGeoPhotos(selectedFiles);
-    };
 
     
 
@@ -159,12 +156,17 @@ const Attendance = () => {
     };
 
     const checkOut = async () => {
-      // const empId = empCheckInList._id;
-      const response = await empCheckOut(empCheckInList.records.length - 1);
+      document.getElementById('closeCheckOutModal').click();
+      console.log("address , distance(component) = " , address , distance)
+      const response = await empCheckOut(empCheckInList.records.length - 1 , address , distance);
       if (response) {
         setEmpCheckIn(()=>response.data.updatedEmployee);
-        console.log("super");
+        console.log("Checked out successfully");
       }
+      setFaceRecognized(false);
+      setAddress('');
+      setDistance('');
+      setDistanceError('');
     };
 
     const convertMinutesToHMS = (totalMinutes) => {
@@ -217,7 +219,6 @@ const Attendance = () => {
       console.log(shift , startTime , endTime)
     }
     const submitEmp = async()=>{
-    
 
       console.log(" saveShift = " , saveShift)
 
@@ -346,14 +347,6 @@ const Attendance = () => {
               }
 
 
-                
-
-                {/* <div className="form-group py-2">
-                  <label htmlFor="" className="form-label">
-                    Upload Geo tag photo:
-                  </label>
-                  <input type="file" className="form-control"  ref={fileInputRef} onChange={(e)=>handleFileChange(e)}  multiple required />
-                </div> */}
 
                 {checkForLate()?
                 
@@ -381,24 +374,11 @@ const Attendance = () => {
                 Cancel
               </button>
 
-                {faceRecognized? !distanceError? 
-                <button type="submit" className="btn btn-primary" >
+              <button type="submit" className="btn btn-primary" disabled={!faceRecognized}>
                 Check In
               </button>
-              :
 
-              <button type="submit" className="btn btn-primary" disabled={true}>
-                Check In
-              </button>
-              :
-              <button type="submit" className="btn btn-primary" disabled={true}>
-              Check In
-            </button>
-            }
 
-              {/* <button type="submit" className="btn btn-primary" disabled={!faceRecognized && !distanceError}>
-                Check In
-              </button> */}
             </div>
             </form>
           </div>
@@ -445,13 +425,13 @@ const Attendance = () => {
                       <h4>{fetchCurrentWorkLocation()}</h4>
                       <h4><Timer startTime={findTimerStartTime()} /></h4>
                       <div className="d-flex justify-content-center align-items-center gap-2">
-                      <button type="button" className="btn btn-primary">
+                      {/* <button type="button" className="btn btn-primary">
                         Edit
-                        </button>
-                      <button type="button" className="btn btn-danger" onClick={()=>checkOut()}>
+                        </button> */}
+                      {/* <button type="button" className="btn btn-danger" data-bs-toggle="modal" data-bs-target="#checkOutModal" onClick={()=>checkOut()}> */}
+                      <button type="button" className="btn btn-danger" data-bs-toggle="modal" data-bs-target="#checkOutModal" onClick={()=>{loadModels(); setLocationLoaded(false);  }}>
                           Check out
                         </button>
-
                       </div>
                      
                   </>
@@ -459,7 +439,7 @@ const Attendance = () => {
                   :
 
                   <div className='d-flex justify-content-center align-items-center gap-2'>
-                    <div  data-bs-toggle="modal" onClick={()=>{loadModels(); updateCurrentTime(); setLocationLoaded(false);  }} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
+                    <div  data-bs-toggle="modal" onClick={()=>{loadModels(); updateCurrentTime(); setLocationLoaded(false); }} data-bs-target="#exampleModal" className="cursor_pointer border gap-2 p-3 rounded-3 d-flex justify-content-center align-items-center flex-column workAssignBtn ">
                     <AiOutlineCarryOut className='fs-3' />
                       Check In
                     </div>
@@ -524,6 +504,64 @@ const Attendance = () => {
       </div>
 
 
+{/* -----check out modal---------  */}
+<div className="modal fade" id="checkOutModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div className="modal-dialog">
+    <div className="modal-content">
+      <div className="modal-header">
+        <h1 className="modal-title fs-5" id="exampleModalLabel">Check out</h1>
+        <button type="button" className="btn-close" id='closeCheckOutModal' data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div className="modal-body">
+      
+      {modelsLoaded? <>
+
+            
+            <div className="form-group d-flex justify-content-center align-items-center flex-column gap-2 py-3">
+              <FaceRecognition modelsLoaded={modelsLoaded} setModelsLoaded={setModelsLoaded} setFaceRecognized={setFaceRecognized} faceapi={faceapi} employeeId = {empCheckInList.employeeId} />
+            </div>
+
+            <div className="d-flex justify-content-center align-items-center">
+              <GetLocationDistance locationLoaded={locationLoaded} setLocationLoaded={setLocationLoaded} distance={distance} setDistance={setDistance} setAddress={setAddress} address={address} distanceError={distanceError} setDistanceError={setDistanceError} />
+            </div>
+
+            </>
+            :
+            <div className="d-flex justify-content-center align-items-center py-4">
+              Loading Face scan ...
+            </div>
+            }
+
+      </div>
+      <div className="modal-footer">
+        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+
+          {/* {faceRecognized? !distanceError? 
+                <button type="submit" className="btn btn-primary" >
+                Check In
+              </button>
+              :
+
+              <button type="submit" className="btn btn-primary" disabled={true}>
+                Check In
+              </button>
+              :
+              <button type="submit" className="btn btn-primary" disabled={true}>
+              Check In
+            </button>
+            } */}
+
+
+        <button type="button" className="btn btn-danger" disabled={!faceRecognized} onClick={()=>checkOut()} >
+          Check out
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 {empCheckInList && empCheckInList.records && empCheckInList.records.length>0? 
       <div className="row pt-5">
         <div className="col"></div>
@@ -533,68 +571,25 @@ const Attendance = () => {
               <thead>
                 <tr>
                   <th scope="col">#</th>
-                  <th scope="col">Work Location</th>
-                  <th scope="col">Start time</th>
-                  <th scope="col">End time</th>
-                  <th scope="col">Total time</th>
-                  <th scope="col">Image</th>
-                  <th scope="col">Status</th>
-                  {/* <th scope="col">Action</th> */}
+                  <th scope="col" className='text-nowrap'>Work Location</th>
+                  <th scope="col"  className='text-nowrap'>Start time</th>
+                  <th scope="col"  className='text-nowrap'>End time</th>
+                  <th scope="col" className='text-nowrap'>Total time</th>
+                  <th scope="col" className='text-center'>Status</th>
                 </tr>
               </thead>
               <tbody>
               {empCheckInList.records && empCheckInList.records.map((record, index) => (
                     <tr key={index}>
                       <th scope='row'>{index + 1}</th>
-                      <td>{record.location}</td>
-                      <td>{record.startTime}</td>
-                      <td className='text-center'>{record.endTime? record.endTime : '-'}</td>
-                      <td className='text-center'>{record.totalTime? convertMinutesToHMS(record.totalTime) : '-'}</td>
-                      <td>{record.images &&
-                            record.images.map((itemFile, index) => {
-                              return (
-                                <div
-                                  className="d-flex justify-content-between align-items-center"
-                                  key={index}
-                                >
-                                  <span
-                                    
-                                    className="text-truncate cursor_pointer fileName "
-                                    style={{ maxWidth: "150px" }}
-                                  >
-                                    {itemFile.substr(0, 23).concat("...") +
-                                      itemFile.split(".")[1]}
-                                  </span>
-
-
-                            <div className="d-flex justify-content-center align-items-center">
-
-                                  <span
-                                    
-                                    className="text-success cursor_pointer  rounded-circle download_bg"
-                                  >
-                                    {/* <MdDownloadForOffline className="downloadIcon rounded-circle" /> */}
-
-                                    
-                                  </span>
-                                  <span className="text-success cursor_pointer  rounded-circle download_bg">
-                                      {/* <MdDelete
-                                  className="actionIcon p-2 rounded-circle cursor_pointer deleteIcon"
-                                  onClick={() => deletePhoto(item._id , index)}
-                                /> */}
-
-                                  </span>
-
-
-                                  </div>
-                                 
-                                </div>
-                              );
-                            })}</td>
-                      <td>{record.status ==="Check In"? 
+                      <td className='text-nowrap'>{record.location}</td>
+                      <td className='text-nowrap'>{record.startTime}</td>
+                      <td className='text-nowrap'>{record.endTime? record.endTime : '-'}</td>
+                      <td className='text-nowrap'>{record.totalTime? convertMinutesToHMS(record.totalTime) : '-'}</td>
+                      <td className='text-nowrap'>{record.status ==="Check In"? 
 
                       <div className="d-flex justify-content-center align-items-center gap-2">
-                        <button type="button" className="btn btn-danger" onClick={()=>checkOut()}>
+                        <button type="button" className="btn btn-danger" data-bs-toggle="modal" data-bs-target="#checkOutModal" onClick={()=>{loadModels(); setLocationLoaded(false);  }}>
                           Check out
                         </button>
                       </div>
@@ -609,29 +604,7 @@ const Attendance = () => {
 
                     
                     }</td>
-                      {/* <td>
-
-                        {record.status ==="Check In"? 
-
-                        
-                        <div className="d-flex justify-content-center align-items-center gap-2">
-                        <button type="button" className="btn btn-primary">
-                        Edit
-                        </button>
-                        <button type="button" className="btn btn-danger">
-                        Delete
-                        </button>
-                        </div>
-
-                        :
-
-                        "-"
-                        
-                      
-                      }
-                        
-                      
-                      </td> */}
+                     
                     </tr>
                   ))}
           

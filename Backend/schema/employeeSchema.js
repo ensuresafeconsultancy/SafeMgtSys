@@ -19,19 +19,16 @@ const recordSchema = new mongoose.Schema({
     startTime: String, 
     endTime: String,
     totalTime: { type: Number, default: 0 }, 
-    images: [String],
-    imagesIds : [String],
+    checkInAddress : String,
+    checkInDistance : String,
+    checkOutAddress : String,
+    checkOutDistance : String,
     notes: String,
     status: String,
     createdAt: { type: Date, default: Date.now }
 });
 
-// employeeId :  {
-//   type: mongoose.Schema.Types.ObjectId,
-//   ref: 'Employee', // Reference the Employee model
-//   required: true
-// },
-  
+
 const employeeAttendanceSchema = new mongoose.Schema({
     employeeId : { type: String, required: true},
     employeeName: { type: String, required: true },
@@ -61,7 +58,12 @@ module.exports = {
 };
 
 
-
+// employeeId :  {
+//   type: mongoose.Schema.Types.ObjectId,
+//   ref: 'Employee', // Reference the Employee model
+//   required: true
+// },
+  
 
 
 

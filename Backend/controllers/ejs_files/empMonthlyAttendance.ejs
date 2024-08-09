@@ -40,6 +40,8 @@ function formatLateTime(time) {
             /* Style the table itself */
             .table-custom {
             width: 100%;
+    
+
             border-collapse: collapse;
             }
     
@@ -59,6 +61,8 @@ function formatLateTime(time) {
     
             /* Add a hover effect to rows */
             .table-custom tr:hover {
+    
+
             background-color: #f5f5f5;
             }
     
@@ -86,6 +90,12 @@ function formatLateTime(time) {
               border-color: inherit;
               font-size: 14px;
             }
+
+            .addressWrap{
+                width: 200px;
+                word-wrap: break-word;
+            }
+          
     
         </style>
        
@@ -111,6 +121,10 @@ function formatLateTime(time) {
                         <th scope="col">Start Time</th>
                         <th scope="col">End Time</th>
                         <th scope="col">Total Time</th>
+                        <th scope="col" >CheckIn Address</th>
+                        <th scope="col">CheckIn Distance</th>
+                        <th scope="col" >CheckOut Address</th>
+                        <th scope="col">CheckOut Distance</th>
                       
                         </tr>
                       </thead>
@@ -134,6 +148,10 @@ function formatLateTime(time) {
                                         <td><%= record.startTime %></td>
                                         <td><%= record.endTime %></td>
                                         <td><%= convertMinutesToHMS(record.totalTime) %></td>
+                                        <td class="addressWrap"><%= record.checkInAddress %></td>
+                                        <td><%= record.checkInDistance %></td>
+                                        <td class="addressWrap"><%= record.checkOutAddress %></td>
+                                        <td><%= record.checkOutDistance %></td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>

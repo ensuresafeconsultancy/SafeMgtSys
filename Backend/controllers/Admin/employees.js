@@ -51,12 +51,43 @@ const loadModels = async () => {
   const upload = multer({ storage: storage })
   
 
+  // router.get('/fetchEmployeeAccounts', async (req, res) => {
+  //   try {
+  //     console.log("Fetching employee accounts...");
+  
+  //     // Fetch all employees and shifts
+  //     const employees = await Employee.find();
+  //     const shifts = await Shift.find();
+  
+  //     if (!employees || employees.length === 0) {
+  //       return res.status(404).send({ status: 0, message: 'No employee records found.' });
+  //     }
+  
+  //     // Map over each employee and insert the corresponding shift data
+  //     const employeeAccounts = employees.map(employee => {
+  //       // Find the corresponding shift for the employee
+  //       const shift = shifts.find(shift => shift._id.toString() === employee.shift.toString());
+  //       return {
+  //         ...employee.toObject(), // Convert Mongoose document to plain object
+  //         shiftData: shift ? shift.toObject() : null // Add shift data if found, otherwise null
+  //       };
+  //     });
+  
+  //     res.send({ status: 1, EmployeeAccounts: employeeAccounts });
+  
+  //   } catch (err) {
+  //     console.error("Error fetching employee accounts:", err.message);
+  //     res.status(500).json({ message: 'Error fetching employee accounts' });
+  //   }
+  // });
+
 
 router.get('/fetchEmployeeAccounts', async(req,res)=>{
     try{
         console.log("hello")
 
         const response = await Employee.find();
+        const shiftData = await Shift.find();
 
         console.log(response)
         console.log(response.length)
@@ -65,7 +96,7 @@ router.get('/fetchEmployeeAccounts', async(req,res)=>{
             return res.status(404).send({ status: 0, message: 'No records found.' });
         }
 
-        res.send({status : 1 , EmployeeAccounts : response})
+        res.send({status : 1 , EmployeeAccounts : response , shiftData : shiftData})
 
 
     }catch(err){

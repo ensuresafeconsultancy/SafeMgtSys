@@ -20,24 +20,43 @@ function redirectToLogin(){
 }
 
 
-export const submitCheckInTime = async(location ,lateReason, geoPhotos)=>{
+export const submitCheckInTime = async(location ,lateReason,  address , distance)=>{
     try{
 
         const token = getEmpJwtToken(); 
         if (token) {
             if(checkConnection()){
 
-                    const newFormData = new FormData();
-                    // newFormData.append('empId' , employee_Id);
-                    if(location){
-                        newFormData.append('location' , location)
-                    }
-                    if(lateReason){
-                        newFormData.append('lateReason' , lateReason)
-                    }
-                    for(let i=0;i<geoPhotos.length;i++){
-                        newFormData.append('geoPhotos' , geoPhotos[i])
-                    }
+                const newFormData = {
+                    location : location,
+                    lateReason : lateReason,
+                    address : address,
+                    distance : distance
+                }
+
+                    // const newFormData = new FormData();
+                    // // newFormData.append('empId' , employee_Id);
+                    // if(location){
+                    //     newFormData.append('location' , location)
+                    // }
+                    // if(lateReason){
+                    //     newFormData.append('lateReason' , lateReason)
+                    // }
+                    // if(address){
+                    //     newFormData.append('address' , address)
+                    // }
+                    // if(distance){
+                    //     newFormData.append('distance' , distance)
+                    // }
+                    // if (location) newFormData.append('location', location);
+                    // if (lateReason) newFormData.append('lateReason', lateReason);
+                    // if (address) newFormData.append('address', address);
+                    // if (distance) newFormData.append('distance', distance);
+                    // for(let i=0;i<geoPhotos.length;i++){
+                    //     newFormData.append('geoPhotos' , geoPhotos[i])
+                    // }
+                    console.log("location ,lateReason,  address , distance = " , location ,lateReason,  address , distance)
+                    console.log("newFormData = " , newFormData)
                     Swal.fire({
                         title: 'Submitting',
                         text: 'Please wait...',
@@ -49,7 +68,7 @@ export const submitCheckInTime = async(location ,lateReason, geoPhotos)=>{
                     });
                         
                     const response = await axios.post(APIURL + SERVER_VARIABLES.submitCheckInTime , newFormData , {
-                        headers: { 'Content-Type': 'multipart/form-data' , Authorization: `Bearer ${token}`},
+                        headers: { Authorization: `Bearer ${token}`},
                     })
 
                     if(response && response.data.status === 1){
@@ -127,12 +146,20 @@ export const checkInList = async()=>{
     }
 }
 
-export const empCheckOut = async(index)=>{
+export const empCheckOut = async(index , address , distance)=>{
     try{
 
         const token = getEmpJwtToken();
         if(token){
             if(checkConnection()){
+
+                console.log(" address , distance = " ,  address , distance)
+
+                let newFormData = {
+                    address : address,
+                    distance : distance
+                }
+
                     Swal.fire({
                         title: 'check-out',
                         text: 'Please wait...',
@@ -143,7 +170,7 @@ export const empCheckOut = async(index)=>{
                         }
                     });
         
-                    const response = await axios.post(APIURL + SERVER_VARIABLES.empCheckOut + `/${index}` , {}, // No data in the body (optional, adjust if needed)
+                    const response = await axios.post(APIURL + SERVER_VARIABLES.empCheckOut + `/${index}` , newFormData, // No data in the body (optional, adjust if needed)
                     {
                     headers: { Authorization: `Bearer ${token}` }, // Attach token to headers
                     });

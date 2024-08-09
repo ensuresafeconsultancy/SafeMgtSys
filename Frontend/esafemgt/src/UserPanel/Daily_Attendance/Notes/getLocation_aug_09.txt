@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , setDistance , address , setAddress , distanceError , setDistanceError }) => {
     // const [location, setLocation] = useState({ lat: null, lon: null, accuracy: null });
-    const [initialLoc, seInitialLoc]= useState({ lat: null, lon: null });
+    const [initialLoc , seInitialLoc]= useState({ lat: null, lon: null});
     const [error, setError] = useState(null);
     
 
@@ -186,7 +186,7 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
 
   return (
     <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-        {/* <button type='button' onClick={()=>{seInitialLoc({ lat: null, lon: null}); setDistance('Loading...'); setAddress('Loading...'); getLocation()}} className='btn px-4 py-2 border rounded-3' >Get the distance </button> */}
+        <button type='button' onClick={()=>{seInitialLoc({ lat: null, lon: null}); setDistance('Loading...'); setAddress('Loading...'); getLocation()}} className='btn px-4 py-2 border rounded-3' >Get the distance </button>
         {/* <p>{`Initial Location: ${initialLoc.lat? initialLoc.lat : "Loading..."}, ${initialLoc.lon? initialLoc.lon : "Loading..."}`}</p> */}
         {/* {error ? (
         <p>Error: {error}</p>
@@ -194,20 +194,15 @@ const GetLocationDistance = ({ locationLoaded , setLocationLoaded , distance , s
         <p>Address: {address}</p>
       )} */}
 
-      {/* {error?  <p>Error: {error}</p> : ''} */}
+      {error?  <p>Error: {error}</p> : ''}
 
         {/* <button>Get Distance</button> <br /><br />
         <button>Stop Distance finding</button><br /><br /> */}
 
-        {/* <div className="d-flex justify-content-center align-items-center">
-          Distance : {distance} meters
-        </div> */}
-        
         <div className="d-flex justify-content-center align-items-center">
-        {/* {distanceError? <span className='text-danger fw-bold'>{distanceError}</span> : ''} */}
+          Distance : {distance} meters
         </div>
-
-
+        {distanceError? <span className='text-danger fw-bold'>{distanceError}</span> : ''}
         
 
     </div>

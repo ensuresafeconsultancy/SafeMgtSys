@@ -54,7 +54,7 @@ const AttendaceRecord = () => {
   return (
     <div id="Attendance_Records" className="p-3">
 
-        <div className="row p-2">
+        {/* <div className="row p-2">
             <div className="col-lg-4 p-3 border rounded-3">
                 
                 <h5>Today Attendance </h5>
@@ -75,7 +75,7 @@ const AttendaceRecord = () => {
                 
             </div>
             <div className="col"></div>
-        </div>
+        </div> */}
 
         <div className="row pt-3">
             <div className="col"></div>
@@ -172,7 +172,10 @@ const AttendaceRecord = () => {
                                 <th scope="col">Start time</th>
                                 <th scope="col">End time</th>
                                 <th scope="col" className='text-nowrap'>Total time</th>
-                                <th scope="col">Image</th>
+                                <th scope="col" className='text-nowrap'>Check-In Address</th>
+                                <th scope="col" className='text-nowrap'>Check-In Distance</th>
+                                <th scope="col" className='text-nowrap'>Check-Out Address</th>
+                                <th scope="col" className='text-nowrap'>Check-Out Distance</th>
                                 <th scope="col">Status</th>
                               
                             </tr>
@@ -188,15 +191,11 @@ const AttendaceRecord = () => {
                                         <td className='text-nowrap'>{item.startTime}</td>
                                         <td className='text-nowrap'>{item.endTime}</td>
                                         <td className='text-nowrap'>{convertMinutesToHMS(item.totalTime)}</td>
-                                        <td className='text-nowrap'>{item.images? 
-
-                                    item.images.map((itemImage , index)=>{
-                                        return <span key={index}>{itemImage.substr(0, 23).concat("...") +
-                                        itemImage.split(".")[1]}</span>
-                                    })
-                                                    : ''
-                                    }</td>
-                                    <td className='text-nowrap'>{item.status}</td>
+                                        <td >{item.checkInAddress}</td>
+                                        <td className='text-nowrap'>{item.checkInDistance} meters</td>
+                                        <td >{item.checkOutAddress? item.checkOutAddress : `-`}</td>
+                                        <td className='text-nowrap'>{item.checkOutDistance? `${item.checkOutDistance} meters` : `-`}</td>
+                                        <td className='text-nowrap'>{item.status}</td>
                                     </tr>
                                 )
                             })}

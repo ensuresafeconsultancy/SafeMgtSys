@@ -4,44 +4,29 @@ const router = express.Router();
 
 const authMiddleware = require('../Authentication/authMiddleware')
 
-const fs = require('fs')
-const path = require('path')
+// const fs = require('fs')
+// const path = require('path')
 const bcrypt = require('bcrypt');
 
 const { Employee , EmployeeAttendance , Shift } = require('../schema/employeeSchema')
 // const shiftSchema = require('../schema/shiftSchema')
 
-const {authorize , uploadFile} = require('./gDrive')
-const { upload , validateFileSize , deleteAllFiles } = require('./multerFileStorage')
+
+const moment = require('moment-timezone');
+
+const getCurrentDateTime = () => {
+    const timeZone = process.env.TIMEZONE || 'UTC'; // Default to UTC if TIMEZONE is not set
+    const dateAndTime = moment().tz(timeZone);
+    const currentDate = dateAndTime.format('DD/MM/YYYY');
+    const currentTime = dateAndTime.format('hh:mm:ss a');
+    return { currentDate, currentTime };
+};
 
 
-router.get('/openFile/:fileId', async (req, res) => {
-  try {
-    const fileId = req.params.fileId; // Get file ID from request parameter
-
-    console.log("fileId = " , fileId)
-    const authClient = await authorize();
-    const drive = google.drive({ version: 'v3', auth: authClient });
-
-    const response = await drive.files.get({ fileId });
-    const urlExtract = response.request.responseURL.split('/');
-    console.log(urlExtract[urlExtract.length-1])
-
-    if(urlExtract[urlExtract.length-1]){
-      res.send({downloadUrl : urlExtract[urlExtract.length-1]})
-    } else {
-      res.status(404).send('File not found or unsupported format');
-    }
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Internal server error'); // Handle errors
-  }
-});
 
 
 // router.get("/checkInList/:employeeId" ,async(req, res)=>{
-router.get("/checkInList", authMiddleware ,async(req, res)=>{
+  router.get("/checkInList", authMiddleware ,async(req, res)=>{
     try{
 
       // const { employeeId } = req.params;
@@ -52,9 +37,13 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
       console.log("employeeId = " , employeeId)
       console.log("employeeName = " , employeeName)
 
-      const dateAndTime = new Date();
-      console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
-      const currentDate = dateAndTime.toLocaleDateString();
+
+      const { currentDate } = getCurrentDateTime();
+ 
+
+      console.log('---------------')
+
+
       // const currentDate = '30/6/2024'
 
       const empCheckInList = await EmployeeAttendance.findOne({ employeeId: employeeId , date : currentDate });
@@ -109,196 +98,462 @@ router.get("/checkInList", authMiddleware ,async(req, res)=>{
 })
 
 
-router.post("/empCheckOut/:index" , async(req , res)=>{
 
-  try{
+router.post("/empCheckOut/:index", async (req, res) => {
+  try {
     console.log("empCheckOut");
 
-    const currentDateAndTime = new Date();
-    // const empId = req.params.empId;
-    const {employeeId} = req.user;
-    const recordIndex = parseInt(req.params.index); // Convert index to a number
+    const { address, distance } = req.body;
+    console.log("address, distance =", address, distance);
 
-    // Find the employee record with matching empId and record index
-    // const employee = await EmployeeAttendance.findOne({ empId : employeeId , currentCheckIn: true });
-    const employee = await EmployeeAttendance.findOne({ employeeId : employeeId, date : currentDateAndTime.toLocaleDateString() , currentCheckIn: true });
-    // const employee = await EmployeeAttendance.findOne({ empId : employeeId, date : '30/6/2024' , currentCheckIn: true });
+    const { currentDate, currentTime } = getCurrentDateTime();  // Assuming this is correctly defined
+    const { employeeId } = req.user;
+    const recordIndex = parseInt(req.params.index);
+
+    const employee = await EmployeeAttendance.findOne({ employeeId, date: currentDate, currentCheckIn: true });
 
     if (!employee) {
       console.error("Employee or record not found");
-      return res.status(404).send({status : 0,  message: "Employee or record not found" });
+      return res.status(404).send({ status: 0, message: "Employee or record not found" });
     }
 
-    // Get the specific record object using index
     const record = employee.records[recordIndex];
 
     if (!record) {
       console.error("Record index out of bounds");
-      return res.status(400).send({status : 0,  message: "Record index out of bounds" });
+      return res.status(400).send({ status: 0, message: "Record index out of bounds" });
     }
 
-    // Update endTime and calculate totalTime (in minutes)
-    record.endTime = currentDateAndTime.toLocaleTimeString();
-    let endTimeUTC = currentDateAndTime;
-    console.log("endTimeUTC = , ", endTimeUTC)
-    console.log("record.createdAt.getTime() = , ", record.createdAt.getTime())
-    console.log("endTimeUTC.getTime() = , ", endTimeUTC.getTime())
+    record.checkOutAddress = address;
+    record.checkOutDistance = distance;
+    record.endTime = currentTime;
 
-    const timeDiffMs = endTimeUTC.getTime() - record.createdAt.getTime();
+    const timeZone = process.env.TIMEZONE || 'UTC';
+
+    const currentDateAndTime = moment().tz(timeZone);
+    const createdAtInTimeZone = moment(record.createdAt).tz(timeZone);
+
+    const timeDiffMs = currentDateAndTime.diff(createdAtInTimeZone);
     record.totalTime = Math.floor(timeDiffMs / (1000 * 60)); // Total time in minutes
-    // record.totalTime = Math.floor((timeDiffMs % (1000 * 60)) / 1000);
 
     record.status = "Check out";
     employee.currentCheckIn = false;
-
     employee.totalTimeWorked += record.totalTime;
-    
-
-    console.log("timeDiffMs = " , timeDiffMs)
-
-    // Update the employee record with the modified record
-    const updatedEmployee = await employee.save();
 
     console.log("Check-out successful for employee:", employeeId);
-    res.send({status : 1, message: "Check-out successful" , updatedEmployee : updatedEmployee});
+    console.log("endTimeUTC =", currentDateAndTime.toString());
+    console.log("record.createdAt =", createdAtInTimeZone.toString());
+    console.log("timeDiffMs =", timeDiffMs);
+
+    const updatedEmployee = await employee.save();
+
+    res.send({ status: 1, message: "Check-out successful", updatedEmployee });
+
+  } catch (err) {
+    console.error("Error during check-out:", err.message);
+    res.status(500).send({ status: 0, message: "Internal server error" });
+  }
+});
+
+  
+
+// router.post("/empCheckOut/:index" , async(req , res)=>{
+
+//   try{
+//     console.log("empCheckOut");
+
+//     const { address , distance } = req.body;
+//     console.log("address , distance = " , address , distance)
+
+
+//     // const currentDateAndTime = new Date();
+//     const { currentDate, currentTime } = getCurrentDateTime();
+
+//     const {employeeId} = req.user;
+//     const recordIndex = parseInt(req.params.index); // Convert index to a number
+
+//     const employee = await EmployeeAttendance.findOne({ employeeId : employeeId, date : currentDate , currentCheckIn: true });
+//     // const employee = await EmployeeAttendance.findOne({ empId : employeeId, date : '30/6/2024' , currentCheckIn: true });
+
+//     if (!employee) {
+//       console.error("Employee or record not found");
+//       return res.status(404).send({status : 0,  message: "Employee or record not found" });
+//     }
+
+//     // Get the specific record object using index
+//     const record = employee.records[recordIndex];
+
+//     if (!record) {
+//       console.error("Record index out of bounds");
+//       return res.status(400).send({status : 0,  message: "Record index out of bounds" });
+//     }
+
+//     // Update endTime and calculate totalTime (in minutes)
+//     record.checkOutAddress = address;
+//     record.checkOutDistance = distance;
+//     console.log("record.checkOutAddress = " , record.checkOutAddress)
+//     record.endTime = currentTime
+
+//     const timeZone = process.env.TIMEZONE || 'UTC';
+
+//       // Get the current date and time in the specified time zone
+//       const currentDateAndTime = moment().tz(timeZone);
+
+//       // Convert `createdAt` to the desired time zone
+//       const createdAtInTimeZone = moment(record.createdAt).tz(timeZone);
+
+//       // Calculate the difference in milliseconds
+//       const timeDiffMs = currentDateAndTime.diff(createdAtInTimeZone);
+
+//       // Convert the difference to minutes
+//       record.totalTime = Math.floor(timeDiffMs / (1000 * 60)); // Total time in minutes
+
+//       // Update status and employee records
+//       record.status = "Check out";
+//       employee.currentCheckIn = false;
+//       employee.totalTimeWorked += record.totalTime;
+
+//       console.log("endTimeUTC =", currentDateAndTime.toString());
+//       console.log("record.createdAt =", createdAtInTimeZone.toString());
+//       console.log("timeDiffMs =", timeDiffMs);
+
+//     // let endTimeUTC = currentDateAndTime;
+//     // console.log("endTimeUTC = , ", endTimeUTC)
+//     // console.log("record.createdAt.getTime() = , ", record.createdAt.getTime())
+//     // console.log("endTimeUTC.getTime() = , ", endTimeUTC.getTime())
+//     // let endTimeUTC = currentDateAndTime;
+//     // console.log("endTimeUTC = , ", endTimeUTC)
+//     // console.log("record.createdAt.getTime() = , ", record.createdAt.getTime())
+//     // console.log("endTimeUTC.getTime() = , ", endTimeUTC.getTime())
+
+//     // const timeDiffMs = endTimeUTC.getTime() - record.createdAt.getTime();
+//     // record.totalTime = Math.floor(timeDiffMs / (1000 * 60)); // Total time in minutes
+//     // record.totalTime = Math.floor((timeDiffMs % (1000 * 60)) / 1000);
+
+//     // record.status = "Check out";
+//     // employee.currentCheckIn = false;
+
+//     // employee.totalTimeWorked += record.totalTime;
+    
+
+//     // console.log("timeDiffMs = " , timeDiffMs)
+
+//     // Update the employee record with the modified record
+//     const updatedEmployee = await employee.save();
+
+//     console.log("Check-out successful for employee:", employeeId);
+//     res.send({status : 1, message: "Check-out successful" , updatedEmployee : updatedEmployee});
         
 
 
-    }catch(err){
-      res.send({status : 0, message : "error"})
-    }
-})
+//     }catch(err){
+//       res.send({status : 0, message : "error"})
+//     }
+// })
 
 
-router.post("/submitCheckInTime", upload.array('geoPhotos'), async (req, res) => {
+
+router.post("/submitCheckInTime", async (req, res) => {
   try {
-    const { location } = req.body;
+    const { location, address, distance } = req.body;
+    console.log("location, address, distance =", location, address, distance);
+    const { employeeId, employeeName } = req.user;
 
-    const lateReason = req.body.lateReason;
-    // const employeeId = req.body.empId;
-    const { employeeId } = req.user;
-    const { employeeName } = req.user;
+    const employeeData = await Employee.findOne({ employeeId });
+    if (!employeeData) {
+      return res.status(404).send("Employee not found");
+    }
 
-    const employeeData = await Employee.findOne({employeeId : employeeId });;
-    console.log("employeeData=" , employeeData)
     const shiftData = await Shift.findById(employeeData.shift);
-    console.log("shiftData = " , shiftData)
+    if (!shiftData) {
+      return res.status(404).send("Shift not found");
+    }
 
-
-    // Get current date and time (consider using moment.js for better formatting)
-    const dateAndTime = new Date();
-    console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
-    const currentDate = dateAndTime.toLocaleDateString();
-    const startTime = dateAndTime.toLocaleTimeString();
-    // const startTime = dateAndTime;
+    const { currentDate, currentTime } = getCurrentDateTime();
+    const currentDateTime = moment();  // Use moment() to get the current moment in time
 
     console.log("Current Date:", currentDate);
-    console.log("Current Time:", startTime);
+    console.log("Current Time:", currentTime);
 
-    const photoFiles = req.files; // Assume uploaded files are in req.files
+    let user = await EmployeeAttendance.findOne({ employeeId, date: currentDate });
 
-    const photoFileIds = [];
-    const photoFileNames = [];
-    const authClient = await authorize(); // Assuming authorization logic
-
-    for (const photo of photoFiles) {
-      const fileLocation = photo.path;
-      const mimeTypeParams = photo.mimetype;
-      const fileId = await uploadFile(authClient, fileLocation, mimeTypeParams, photo.originalname);
-      photoFileIds.push(fileId.data.id);
-      photoFileNames.push(photo.originalname); // Optional: Store original filename
+    if (!user) {
+      const userData = {
+        employeeId,
+        employeeName,
+        date: currentDate,
+        currentCheckIn: true,
+        shift: shiftData.shiftName,
+        shiftStartTime: shiftData.startTime,
+        shiftEndTime: shiftData.endTime,
+        records: [
+          {
+            location,
+            startTime: currentTime,
+            endTime: '',
+            totalTime: '',
+            checkInAddress: address,
+            checkInDistance: distance,
+            checkOutAddress: '',
+            checkOutDistance: '',
+            status: "Check In"
+          }
+        ]
+      };
+      const newUser = new EmployeeAttendance(userData);
+      const response = await newUser.save();
+      console.log(response);
+      res.send({ status: 1, message: "success", updatedEmployee: response });
+      return;
     }
 
-    console.log("photoFileIds:", photoFileIds);
-    console.log("photoFileNames:", photoFileNames);
+    if (user.records.length === 0) {
+      const shiftStartTime = user.shiftStartTime;
+      const findLate = calculateLateOrNot(shiftStartTime, currentDateTime);
 
-    
-
-
-    // if (employeeId === '2345') {
-      // Find the user with empId 2345 (replace with your finding logic)
-      // const user = await EmployeeAttendance.findOne({ empId: employeeId , date : '30/6/2024' });
-      const user = await EmployeeAttendance.findOne({ employeeId: employeeId , date : currentDate });
-
-      if (!user) {
-        // User not found, create a new user with the first record
-        const userData = {
-          employeeId: employeeId,
-          employeeName,
-          date: currentDate,
-          currentCheckIn: true,
-          shift: shiftData.shiftName,
-          shiftStartTime : shiftData.startTime,
-          shiftEndTime : shiftData.endTime,
-          records: [
-            {
-              location,
-              startTime,
-              endTime: '',
-              totalTime: '',
-              images: photoFileNames,
-              imagesIds: photoFileIds,
-              status: "Check In"
-            }
-          ]
-        };
-        const newUser = new EmployeeAttendance(userData);
-        const response = await newUser.save();
-        console.log(response);
-        res.send({  status : 1 , message: "success" , updatedEmployee : response });
-        return; // Exit if user is created
-      }
-
-      let shiftStartTime = shiftData.startTime;
-
-      if(user.records.length == 0){
-        const shiftStartTime = user.shiftStartTime;
-        const findLate = calculateLateOrNot(shiftStartTime , dateAndTime)
-
-        if(findLate.isLate){
-          user.lateTime = findLate.timeDifference;
-          if(req.body.lateReason){
-            user.lateReason = req.body.lateReason;
-          }
+      if (findLate.isLate) {
+        user.lateTime = findLate.timeDifference;
+        if (req.body.lateReason) {
+          user.lateReason = req.body.lateReason;
         }
-      
       }
+    }
 
-      if(user.currentCheckIn === true){
-        deleteAllFiles('files'); 
-        return res.status(500).send("Internal server error");
-      }
+    if (user.currentCheckIn === true) {
+      return res.status(500).send("Internal server error");
+    }
 
+    user.currentCheckIn = true;
+    user.records.push({
+      location,
+      startTime: currentTime,
+      endTime: '',
+      totalTime: '',
+      checkInAddress: address,
+      checkInDistance: distance,
+      checkOutAddress: '',
+      checkOutDistance: '',
+      status: "Check In"
+    });
 
-      // User found, append the new record
-      user.currentCheckIn = true;
-      user.records.push({
-        location,
-        startTime,
-        endTime: '',
-        totalTime: '',
-        images: photoFileNames,
-        imagesIds: photoFileIds,
-        status: "Check In"
-      });
-
-      const updatedEmployee = await user.save();
-      console.log(user); // Updated user with appended record
-      res.send({ status : 1 , message: "Record appended successfully" , updatedEmployee : updatedEmployee });
-    // } 
-    // else {
-    //   // Handle case where empId is not 2345 (optional)
-    //   console.log("Invalid empId");
-    //   res.status(400).send("Invalid employee ID"); // Or handle differently
-    // }
-
-    deleteAllFiles('files'); // Assuming deletion of uploaded files
+    const updatedEmployee = await user.save();
+    console.log(user);
+    res.send({ status: 1, message: "Record appended successfully", updatedEmployee });
 
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error");
   }
 });
+
+
+const calculateLateOrNot = (shiftStartTime, currentDateTime) => {
+  const timeZone = process.env.TIMEZONE || 'UTC'; // Use the specified time zone or default to UTC
+
+  // Parse the shift start time and convert to the desired time zone
+  const [shiftHour, shiftMinute] = shiftStartTime.split(':');
+  const shiftTime = moment.tz({ hour: shiftHour, minute: shiftMinute }, timeZone);
+
+  // Convert current date and time to the same time zone
+  const currentTime = moment.tz(currentDateTime, timeZone);
+
+  console.log("Shift Time =", shiftTime.format('HH:mm:ss'));
+  console.log("Current Time =", currentTime.format('HH:mm:ss'));
+
+  const timeDifferenceInMilliseconds = currentTime.diff(shiftTime);
+
+  // Convert to total seconds
+  const totalSeconds = Math.floor(timeDifferenceInMilliseconds / 1000);
+
+  // Calculate hours, minutes, and seconds
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  // Format the time difference
+  const formattedTimeDifference = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  console.log("Formatted Time Difference =", formattedTimeDifference);
+
+  return {
+    isLate: currentTime.isAfter(shiftTime),
+    timeDifference: formattedTimeDifference,
+  };
+};
+
+
+
+
+
+
+
+
+// router.post("/submitCheckInTime", async (req, res) => {
+//   try {
+//     const { location, address, distance } = req.body;
+//     console.log("location, address, distance = " , location, address, distance)
+//     const { employeeId, employeeName } = req.user;
+
+//     const employeeData = await Employee.findOne({ employeeId });
+//     if (!employeeData) {
+//       return res.status(404).send("Employee not found");
+//     }
+
+//     // Fetch shift data
+//     const shiftData = await Shift.findById(employeeData.shift);
+//     if (!shiftData) {
+//       return res.status(404).send("Shift not found");
+//     }
+
+//     // Get current date and time (consider using moment.js for better formatting)
+//     const dateAndTime = new Date();
+//     console.log("dateAndTime check time = " , dateAndTime.toLocaleTimeString())
+//     const currentDate = dateAndTime.toLocaleDateString();
+//     const startTime = dateAndTime.toLocaleTimeString();
+//     // const startTime = dateAndTime;
+
+//     console.log("Current Date:", currentDate);
+//     console.log("Current Time:", startTime);
+
+
+//       const user = await EmployeeAttendance.findOne({ employeeId: employeeId , date : currentDate });
+
+//       if (!user) {
+//         // User not found, create a new user with the first record
+//         const userData = {
+//           employeeId: employeeId,
+//           employeeName,
+//           date: currentDate,
+//           currentCheckIn: true,
+//           shift: shiftData.shiftName,
+//           shiftStartTime : shiftData.startTime,
+//           shiftEndTime : shiftData.endTime,
+//           records: [
+//             {
+//               location,
+//               startTime,
+//               endTime: '',
+//               totalTime: '',
+//               checkInAddress : address,
+//               checkInDistance : distance,
+//               checkOutAddress : '',
+//               checkOutDistance : '',
+//               status: "Check In"
+//             }
+//           ]
+//         };
+//         const newUser = new EmployeeAttendance(userData);
+//         const response = await newUser.save();
+//         console.log(response);
+//         res.send({  status : 1 , message: "success" , updatedEmployee : response });
+//         return; // Exit if user is created
+//       }
+
+//       if(user.records.length == 0){
+//         const shiftStartTime = user.shiftStartTime;
+//         const findLate = calculateLateOrNot(shiftStartTime , dateAndTime)
+
+//         if(findLate.isLate){
+//           user.lateTime = findLate.timeDifference;
+//           if(req.body.lateReason){
+//             user.lateReason = req.body.lateReason;
+//           }
+//         }
+//       }
+
+//       if(user.currentCheckIn === true){
+//         return res.status(500).send("Internal server error");
+//       }
+
+
+//       // User found, append the new record
+//       user.currentCheckIn = true;
+//       user.records.push({
+//         location,
+//         startTime,
+//         endTime: '',
+//         totalTime: '',
+//         checkInAddress : address,
+//         checkInDistance : distance,
+//         checkOutAddress : '',
+//         checkOutDistance : '',
+//         status: "Check In"
+//       });
+
+//       const updatedEmployee = await user.save();
+//       console.log(user); // Updated user with appended record
+//       res.send({ status : 1 , message: "Record appended successfully" , updatedEmployee : updatedEmployee });
+
+
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Internal server error");
+//   }
+// });
+
+
+// const calculateLateOrNot = (shiftStartTime , dateAndTime)=>{
+
+//   const [shiftHour, shiftMinute] = shiftStartTime.split(':');
+//   const shiftHour24 = parseInt(shiftHour, 10);
+
+//   // Create Date objects for comparison
+//   const shiftTime = new Date();
+//   shiftTime.setHours(shiftHour24, parseInt(shiftMinute, 10));
+//   shiftTime.setMinutes(0);
+//   shiftTime.setSeconds(0);
+
+//   console.log("shiftTime = " , shiftTime)
+//   console.log("currentTime check = " , dateAndTime)
+
+//   const timeDifferenceInMilliseconds = dateAndTime - shiftTime;
+
+//   // Convert to seconds
+//   const totalSeconds = Math.floor(timeDifferenceInMilliseconds / 1000);
+
+//   // Calculate hours, minutes, and seconds
+//   const hours = Math.floor(totalSeconds / 3600);
+//   const minutes = Math.floor((totalSeconds % 3600) / 60);
+//   const seconds = totalSeconds % 60;
+
+//   // Format the time difference
+//   const formattedTimeDifference = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+//   console.log("formattedTimeDifference = " , formattedTimeDifference)
+
+//   return {
+//     isLate: dateAndTime > shiftTime,
+//     timeDifference: formattedTimeDifference
+//   };
+
+// }
+
+router.post("/addShift" , async(req,res)=>{
+
+  try{
+
+    let { shiftName , startTime , endTime } = req.body;
+
+    console.log(shiftName , startTime , endTime)
+
+    const newShift = new Shift({
+      shiftName:shiftName  , startTime:startTime , endTime:endTime
+    })
+
+
+    const response = await newShift.save();
+    if(response){
+      console.log(response)
+    }
+
+    console.log(shiftName , startTime , endTime)
+    res.send({response})
+
+  }catch(err){
+    res.send("something went wrong sorrryyy")
+  }
+
+})
 
 
 router.post("/addEmployee" , async(req,res)=>{
@@ -360,69 +615,6 @@ router.post("/addEmployee" , async(req,res)=>{
   }
 
 })
-
-router.post("/addShift" , async(req,res)=>{
-
-  try{
-
-    let { shiftName , startTime , endTime } = req.body;
-
-    console.log(shiftName , startTime , endTime)
-
-    const newShift = new Shift({
-      shiftName:shiftName  , startTime:startTime , endTime:endTime
-    })
-
-
-    const response = await newShift.save();
-    if(response){
-      console.log(response)
-    }
-
-    console.log(shiftName , startTime , endTime)
-    res.send({response})
-
-  }catch(err){
-    res.send("something went wrong sorrryyy")
-  }
-
-})
-
-const calculateLateOrNot = (shiftStartTime , dateAndTime)=>{
-
-  const [shiftHour, shiftMinute] = shiftStartTime.split(':');
-  const shiftHour24 = parseInt(shiftHour, 10);
-
-  // Create Date objects for comparison
-  const shiftTime = new Date();
-  shiftTime.setHours(shiftHour24, parseInt(shiftMinute, 10));
-  shiftTime.setMinutes(0);
-  shiftTime.setSeconds(0);
-
-  console.log("shiftTime = " , shiftTime)
-  console.log("currentTime check = " , dateAndTime)
-
-  const timeDifferenceInMilliseconds = dateAndTime - shiftTime;
-
-  // Convert to seconds
-  const totalSeconds = Math.floor(timeDifferenceInMilliseconds / 1000);
-
-  // Calculate hours, minutes, and seconds
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  // Format the time difference
-  const formattedTimeDifference = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-  console.log("formattedTimeDifference = " , formattedTimeDifference)
-
-  return {
-    isLate: dateAndTime > shiftTime,
-    timeDifference: formattedTimeDifference
-  };
-
-}
 
 
 
